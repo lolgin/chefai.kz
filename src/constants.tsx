@@ -37,6 +37,45 @@ export const THEMES: ThemeScheme[] = [
     fontScale: 1.1,
     blur: '12px'
   },
+    {
+    id: 'midnight-blue',
+    name: 'Midnight Blue',
+    bg: '🔷#1a1f3a',
+    surface: '🔷rgba(32, 42, 68, 0.85)',
+    text: '🔷#e8f0ff',
+    accent: '🔷#4d7cff',
+    secondary: '🔷#2d4a9e',
+    isLight: false,
+    layout: 'MONOLITH',
+    fontSize: 1.0,
+    blur: '18px'
+  },
+  {
+    id: 'royal-purple',
+    name: 'Royal Purple',
+    bg: '🟣#2d1b4e',
+    surface: '🟣rgba(58, 35, 96, 0.8)',
+    text: '🟣#f5e6ff',
+    accent: '🟣#a855f7',
+    secondary: '🟣#7c3aed',
+    isLight: false,
+    layout: 'COCKPIT',
+    fontSize: 1.1,
+    blur: '20px'
+  },
+  {
+    id: 'forest-green',
+    name: 'Forest Green',
+    bg: '🟢#1a3a2e',
+    surface: '🟢rgba(28, 69, 54, 0.85)',
+    text: '🟢#e0f2e9',
+    accent: '🟢#10b981',
+    secondary: '🟢#059669',
+    isLight: false,
+    layout: 'MONOLITH',
+    fontSize: 1.0,
+    blur: '16px'
+  },
   {
     id: 'toxic-acid',
     name: 'Acid Matrix',
