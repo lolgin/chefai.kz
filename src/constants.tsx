@@ -101,6 +101,177 @@ export const THEMES: ThemeScheme[] = [
     layout: 'CONTROL_PANEL',
     fontScale: 1.15,
     blur: '15px'
+      // === WINAMP-STYLE SKINS COLLECTION ===
+        // Classic Themes
+          {
+                id: 'midnight-blue',
+                    name: '🌙 Midnight Blue',
+                        bg: '#0a0e27',
+                            surface: 'rgba(30, 58, 138, 0.1)',
+                                text: '#60a5fa',
+                                    accent: '#3b82f6',
+                                        secondary: '#1e3a8a',
+                                            isLight: false,
+                                                layout: 'MONOLITH',
+                                                    fontScale: 1.1,
+                                                        blur: '18px'
+                                                          },
+  }
+    // Royal Purple
+  {
+    id: 'royal-purple',
+    name: '👑 Royal Purple',
+    bg: '#1a0a2e',
+    surface: 'rgba(124, 58, 237, 0.1)',
+    text: '#c084fc',
+    accent: '#9333ea',
+    secondary: '#6b21a8',
+    isLight: false,
+    layout: 'CONTROL_PANEL',
+    fontScale: 1.15,
+    blur: '16px'
+  },
+    // Forest Green
+  {
+    id: 'forest-green',
+    name: '🌲 Forest Green',
+    bg: '#0a1f0a',
+    surface: 'rgba(34, 197, 94, 0.08)',
+    text: '#4ade80',
+    accent: '#22c55e',
+    secondary: '#166534',
+    isLight: false,
+    layout: 'DATAVIEW',
+    fontScale: 1.1,
+    blur: '14px'
+  },
+  // Cherry Red
+  {
+    id: 'cherry-red',
+    name: '🍒 Cherry Red',
+    bg: '#2d0a0a',
+    surface: 'rgba(239, 68, 68, 0.1)',
+    text: '#fca5a5',
+    accent: '#ef4444',
+    secondary: '#991b1b',
+    isLight: false,
+    layout: 'COCKPIT',
+    fontScale: 1.2,
+    blur: '12px'
+  },
+  // Ocean Teal
+  {
+    id: 'ocean-teal',
+    name: '🌊 Ocean Teal',
+    bg: '#051923',
+    surface: 'rgba(20, 184, 166, 0.08)',
+    text: '#5eead4',
+    accent: '#14b8a6',
+    secondary: '#0f766e',
+    isLight: false,
+    layout: 'GHOST',
+    fontScale: 1.05,
+    blur: '20px'
+  },
+    // Sunset Orange
+  {
+    id: 'sunset-orange',
+    name: '🌅 Sunset Orange',
+    bg: '#2d1810',
+    surface: 'rgba(249, 115, 22, 0.1)',
+    text: '#fdba74',
+    accent: '#f97316',
+    secondary: '#9a3412',
+    isLight: false,
+    layout: 'MONOLITH',
+    fontScale: 1.15,
+    blur: '16px'
+  },
+  // === Futuristic Themes ===
+  // Crystal Ice
+  {
+    id: 'crystal-ice',
+    name: '💎 Crystal Ice',
+    bg: '#0c1222',
+    surface: 'rgba(56, 189, 248, 0.08)',
+    text: '#7dd3fc',
+    accent: '#38bdf8',
+    secondary: '#0c4a6e',
+    isLight: false,
+    layout: 'COCKPIT',
+    fontScale: 1.1,
+    blur: '22px'
+  },
+  // Plasma Fire
+  {
+    id: 'plasma-fire',
+    name: '🔥 Plasma Fire',
+    bg: '#1a0b0b',
+    surface: 'rgba(251, 146, 60, 0.1)',
+    text: '#fecaca',
+    accent: '#fb923c',
+    secondary: '#7c2d12',
+    isLight: false,
+    layout: 'DATAVIEW',
+    fontScale: 1.15,
+    blur: '10px'
+  },
+    // === Retro Themes ===
+  // Winamp Classic
+  {
+    id: 'winamp-classic',
+    name: '🎵 Winamp Classic',
+    bg: '#000814',
+    surface: 'rgba(0, 212, 255, 0.12)',
+    text: '#00d4ff',
+    accent: '#00ff00',
+    secondary: '#003566',
+    isLight: false,
+    layout: 'CONTROL_PANEL',
+    fontScale: 1.0,
+    blur: '8px'
+  },
+  // Windows 95
+  {
+    id: 'windows-95',
+    name: '💾 Windows 95',
+    bg: '#008080',
+    surface: 'rgba(192, 192, 192, 0.15)',
+    text: '#ffffff',
+    accent: '#000080',
+    secondary: '#c0c0c0',
+    isLight: false,
+    layout: 'MONOLITH',
+    fontScale: 1.0,
+    blur: '0px'
+  },
+  // Vapor Wave
+  {
+    id: 'vapor-wave',
+    name: '🌴 Vapor Wave',
+    bg: '#120d31',
+    surface: 'rgba(255, 113, 206, 0.08)',
+    text: '#ff71ce',
+    accent: '#01cdfe',
+    secondary: '#05ffa1',
+    isLight: false,
+    layout: 'GHOST',
+    fontScale: 1.15,
+    blur: '18px'
+  },
+  // Golden Hour
+  {
+    id: 'golden-hour',
+    name: '✨ Golden Hour',
+    bg: '#1f1810',
+    surface: 'rgba(251, 191, 36, 0.08)',
+    text: '#fde047',
+    accent: '#fbbf24',
+    secondary: '#92400e',
+    isLight: false,
+    layout: 'CONTROL_PANEL',
+    fontScale: 1.1,
+    blur: '16px'
   }
 ];
 
