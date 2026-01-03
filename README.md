@@ -13,6 +13,8 @@ View your app in AI Studio: https://ai.studio/apps/drive/1k-3u402rftSKiRFPfX94oW
 **Prerequisites:**  Node.js 18+
 
 > **🇷🇺 Подробная инструкция на русском**: См. [ЗАПУСК_ЛОКАЛЬНО.md](./ЗАПУСК_ЛОКАЛЬНО.md)
+> 
+> **🚀 Деплой на сервер**: См. [DEPLOYMENT_STRATEGY.md](./DEPLOYMENT_STRATEGY.md)
 
 1. Install dependencies:
    ```bash
