@@ -39,7 +39,8 @@ export const LeftPanel: React.FC<LeftPanelProps> = ({
       style={{ borderColor: `${theme.text}11`, width: isOpen ? '280px' : '0' }}
     >
       <div className="p-6 w-80 h-full overflow-y-auto no-scrollbar space-y-6">
-        <h3 className="text-[10px] font-black uppercase text-indigo-600 tracking-widest flex items-center gap-2">
+        <h3 className="text-[10px] font-black uppercase tracking-widest flex items-center gap-2"
+            style={{ color: theme.text }}>
           <Hexagon size={12} /> NEURAL_CORE
         </h3>
         
@@ -62,11 +63,14 @@ export const LeftPanel: React.FC<LeftPanelProps> = ({
                   <button
                     key={name}
                     onClick={() => url && onGenreClick(url, name, p.id as Provider, true)}
-                    className={`w-full text-left px-3 py-1.5 rounded-lg text-[9px] font-black uppercase transition-all ${
-                      currentGenre === name
-                        ? 'bg-indigo-600 text-white shadow-md'
-                        : 'hover:bg-black/10 opacity-60'
-                    }`}
+                    className="w-full text-left px-3 py-1.5 rounded-lg text-[9px] font-black uppercase transition-all shadow-md"
+                    style={{
+                      backgroundColor: currentGenre === name ? theme.accent : 'transparent',
+                      color: currentGenre === name ? (theme.isLight ? '#000' : '#fff') : theme.text,
+                      opacity: currentGenre === name ? 1 : 0.6
+                    }}
+                    onMouseEnter={e => currentGenre !== name && (e.currentTarget.style.opacity = '1')}
+                    onMouseLeave={e => currentGenre !== name && (e.currentTarget.style.opacity = '0.6')}
                   >
                     {name}
                   </button>

@@ -7,6 +7,7 @@
  */
 
 import React, { ReactNode } from 'react';
+import { useSettings } from '../../contexts/SettingsContext';
 
 interface ButtonProps {
   children: ReactNode;
@@ -27,13 +28,9 @@ export const Button: React.FC<ButtonProps> = ({
   disabled = false,
   className = ''
 }) => {
-  const baseStyles = 'font-black uppercase transition-all flex items-center justify-center gap-2';
+  const { theme } = useSettings();
   
-  const variantStyles = {
-    primary: 'bg-indigo-600 text-white hover:scale-105 active:scale-95 shadow-xl',
-    secondary: 'bg-black/10 hover:bg-black/20',
-    danger: 'bg-rose-600 text-white hover:scale-105 active:scale-95 shadow-xl'
-  };
+  const baseStyles = 'font-black uppercase transition-all flex items-center justify-center gap-2';
   
   const sizeStyles = {
     sm: 'px-4 py-2 text-xs rounded-lg',
@@ -41,11 +38,32 @@ export const Button: React.FC<ButtonProps> = ({
     lg: 'px-14 py-7 text-2xl rounded-[3rem]'
   };
 
+  const getVariantStyles = () => {
+    switch (variant) {
+      case 'primary':
+        return {
+          backgroundColor: theme.accent,
+          color: theme.isLight ? '#000' : '#fff'
+        };
+      case 'secondary':
+        return {
+          backgroundColor: theme.surface,
+          color: theme.text
+        };
+      case 'danger':
+        return {
+          backgroundColor: '#f43f5e',
+          color: '#fff'
+        };
+    }
+  };
+
   return (
     <button
       onClick={onClick}
       disabled={disabled}
-      className={`${baseStyles} ${variantStyles[variant]} ${sizeStyles[size]} ${disabled ? 'opacity-50 cursor-not-allowed' : ''} ${className}`}
+      className={`${baseStyles} ${sizeStyles[size]} hover:scale-105 active:scale-95 shadow-xl ${disabled ? 'opacity-50 cursor-not-allowed' : ''} ${className}`}
+      style={getVariantStyles()}
     >
       {icon && <span>{icon}</span>}
       {children}

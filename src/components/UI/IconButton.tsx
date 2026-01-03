@@ -6,6 +6,7 @@
  */
 
 import React, { ReactNode } from 'react';
+import { useSettings } from '../../contexts/SettingsContext';
 
 interface IconButtonProps {
   icon: ReactNode;
@@ -26,6 +27,7 @@ export const IconButton: React.FC<IconButtonProps> = ({
   className = '',
   title
 }) => {
+  const { theme } = useSettings();
   const baseStyles = 'flex items-center justify-center transition-all';
   
   const sizeStyles = {
@@ -34,16 +36,20 @@ export const IconButton: React.FC<IconButtonProps> = ({
     lg: 'p-4 rounded-2xl'
   };
 
-  const stateStyles = active
-    ? 'bg-indigo-600 text-white shadow-xl'
-    : 'opacity-30 hover:opacity-100 hover:scale-125';
-
   return (
     <button
       onClick={onClick}
       disabled={disabled}
       title={title}
-      className={`${baseStyles} ${sizeStyles[size]} ${stateStyles} ${disabled ? 'opacity-20 cursor-not-allowed' : ''} ${className}`}
+      className={`${baseStyles} ${sizeStyles[size]} ${disabled ? 'opacity-20 cursor-not-allowed' : ''} ${className}`}
+      style={{
+        backgroundColor: active ? theme.accent : 'transparent',
+        color: active ? (theme.isLight ? '#000' : '#fff') : theme.text,
+        opacity: active ? 1 : 0.3,
+        transform: active ? 'scale(1)' : 'scale(1)'
+      }}
+      onMouseEnter={e => !active && (e.currentTarget.style.opacity = '1', e.currentTarget.style.transform = 'scale(1.25)')}
+      onMouseLeave={e => !active && (e.currentTarget.style.opacity = '0.3', e.currentTarget.style.transform = 'scale(1)')}
     >
       {icon}
     </button>
