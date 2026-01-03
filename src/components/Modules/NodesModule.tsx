@@ -42,6 +42,7 @@ export const NodesModule: React.FC<NodesModuleProps> = ({
     const randomNode = moduleCloudItems[Math.floor(Math.random() * moduleCloudItems.length)];
     if (randomNode) onNodeClick(randomNode.data);
   };
+  
   return (
     <div className="flex-1 flex flex-col">
       <div className="flex justify-center mb-6">
@@ -68,7 +69,7 @@ export const NodesModule: React.FC<NodesModuleProps> = ({
         onMouseDown={onDragStart}
         onMouseUp={onDragEnd}
       >
-      <div className="scene-3d w-full h-full">
+        <div className="scene-3d w-full h-full">
         <div
           className="cloud-3d"
           style={{
@@ -105,6 +106,7 @@ export const NodesModule: React.FC<NodesModuleProps> = ({
             );
           })}
         </div>
+      </div>
       </div>
     </div>
   );
