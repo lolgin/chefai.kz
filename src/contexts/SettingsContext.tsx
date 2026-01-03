@@ -1,0 +1,128 @@
+/**
+ * SettingsContext.tsx
+ * 
+ * Контекст для управления настройками приложения
+ * Содержит:
+ * - Тема оформления
+ * - Настройки эквалайзера
+ * - Пользовательские ноды (станции)
+ * - Избранное и черный список
+ * - Сохранение/загрузка из localStorage
+ */
+
+import React, { createContext, useContext, useState, useEffect, ReactNode, useMemo } from 'react';
+import { AppSettings, ThemeScheme, CustomNode, FavoriteNode } from '../types';
+import { THEMES } from '../constants';
+
+interface SettingsContextType {
+  settings: AppSettings;
+  theme: ThemeScheme;
+  updateSettings: (updates: Partial<AppSettings>) => void;
+  resetSettings: () => void;
+  addCustomNode: (node: CustomNode) => void;
+  removeCustomNode: (id: string) => void;
+  addFavorite: (node: FavoriteNode) => void;
+  removeFavorite: (url: string) => void;
+}
+
+const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
+
+const DEFAULT_SETTINGS: AppSettings = {
+  themeId: 'frost',
+  equalizer: {
+    bands: { '32': 0, '64': 0, '125': 0, '250': 0, '500': 0, '1k': 0, '2k': 0, '4k': 0, '8k': 0, '16k': 0 },
+    preamp: 1,
+    stereoWidth: 1,
+    limiterEnabled: true,
+    eqBandCount: 10
+  },
+  customNodes: [],
+  favorites: [],
+  blacklist: []
+};
+
+const STORAGE_KEY = 'aurawave_v27_settings';
+
+export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+  const [settings, setSettings] = useState<AppSettings>(() => {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      try {
+        return { ...DEFAULT_SETTINGS, ...JSON.parse(saved) };
+      } catch (error) {
+        console.warn('Failed to parse settings from localStorage, using defaults', error);
+        return DEFAULT_SETTINGS;
+      }
+    }
+    return DEFAULT_SETTINGS;
+  });
+
+  // Получаем текущую тему
+  const theme: ThemeScheme = useMemo(
+    () => THEMES.find(t => t.id === settings.themeId) || THEMES[0],
+    [settings.themeId]
+  );
+
+  // Сохранение в localStorage при изменении настроек
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
+  }, [settings]);
+
+  const updateSettings = (updates: Partial<AppSettings>) => {
+    setSettings(prev => ({ ...prev, ...updates }));
+  };
+
+  const resetSettings = () => {
+    setSettings(DEFAULT_SETTINGS);
+    localStorage.removeItem(STORAGE_KEY);
+  };
+
+  const addCustomNode = (node: CustomNode) => {
+    setSettings(prev => ({
+      ...prev,
+      customNodes: [...prev.customNodes, node]
+    }));
+  };
+
+  const removeCustomNode = (id: string) => {
+    setSettings(prev => ({
+      ...prev,
+      customNodes: prev.customNodes.filter(n => n.id !== id)
+    }));
+  };
+
+  const addFavorite = (node: FavoriteNode) => {
+    setSettings(prev => ({
+      ...prev,
+      favorites: [...prev.favorites, node]
+    }));
+  };
+
+  const removeFavorite = (url: string) => {
+    setSettings(prev => ({
+      ...prev,
+      favorites: prev.favorites.filter(n => n.url !== url)
+    }));
+  };
+
+  const value: SettingsContextType = {
+    settings,
+    theme,
+    updateSettings,
+    resetSettings,
+    addCustomNode,
+    removeCustomNode,
+    addFavorite,
+    removeFavorite
+  };
+
+  return <SettingsContext.Provider value={value}>{children}</SettingsContext.Provider>;
+};
+
+export const useSettings = () => {
+  const context = useContext(SettingsContext);
+  if (!context) {
+    throw new Error('useSettings must be used within SettingsProvider');
+  }
+  return context;
+};

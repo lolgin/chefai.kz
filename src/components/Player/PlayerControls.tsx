@@ -1,0 +1,73 @@
+/**
+ * PlayerControls.tsx
+ * 
+ * Кнопки управления плеером
+ * Содержит:
+ * - Play/Pause кнопка
+ * - Skip Forward/Back
+ * - Shuffle режим
+ */
+
+import React from 'react';
+import { Play, Pause, SkipForward, SkipBack, Shuffle, Loader2 } from 'lucide-react';
+import { IconButton } from '../UI/IconButton';
+
+interface PlayerControlsProps {
+  isPlaying: boolean;
+  isLoading: boolean;
+  isShuffleMode: boolean;
+  onTogglePlay: () => void;
+  onNext: () => void;
+  onPrev: () => void;
+  onToggleShuffle: () => void;
+}
+
+export const PlayerControls: React.FC<PlayerControlsProps> = ({
+  isPlaying,
+  isLoading,
+  isShuffleMode,
+  onTogglePlay,
+  onNext,
+  onPrev,
+  onToggleShuffle
+}) => {
+  return (
+    <div className="flex items-center gap-8 lg:gap-14">
+      <IconButton
+        icon={<SkipBack size={28} />}
+        onClick={onPrev}
+        title="Previous"
+      />
+      
+      <button
+        onClick={onTogglePlay}
+        className="w-16 h-16 rounded-[2.2rem] bg-indigo-600 text-white flex items-center justify-center shadow-2xl hover:scale-110 active:scale-95 transition-all border-4 border-white/20"
+      >
+        {isLoading ? (
+          <Loader2 size={24} className="animate-spin" />
+        ) : isPlaying ? (
+          <Pause size={30} fill="currentColor" />
+        ) : (
+          <Play size={30} fill="currentColor" className="ml-1" />
+        )}
+      </button>
+      
+      <IconButton
+        icon={<SkipForward size={28} />}
+        onClick={onNext}
+        title="Next"
+      />
+      
+      <button
+        onClick={onToggleShuffle}
+        className={`p-3 rounded-xl transition-all ${
+          isShuffleMode
+            ? 'bg-indigo-600 text-white shadow-xl'
+            : 'opacity-20 hover:opacity-100'
+        }`}
+      >
+        <Shuffle size={20} />
+      </button>
+    </div>
+  );
+};

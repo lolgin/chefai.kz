@@ -1,0 +1,67 @@
+/**
+ * useStreamDiscovery.ts
+ * 
+ * Хук для поиска и управления потоками
+ * Содержит:
+ * - Поисковый запрос и состояние поиска
+ * - Список найденных потоков
+ * - Функция поиска с задержкой (debounce)
+ * - Фильтрация и сортировка результатов
+ */
+
+import { useState, useEffect } from 'react';
+import { searchStreams, DiscoveredStream } from '../services/streamDiscovery';
+
+interface UseStreamDiscoveryOptions {
+  isInitialized: boolean;
+  onLog?: (msg: string, type: 'info' | 'warn' | 'zap' | 'error') => void;
+}
+
+export const useStreamDiscovery = ({ isInitialized, onLog }: UseStreamDiscoveryOptions) => {
+  const [searchQuery, setSearchQuery] = useState('Cyberpunk');
+  const [isSearching, setIsSearching] = useState(false);
+  const [suggestions, setSuggestions] = useState<DiscoveredStream[]>([]);
+  const [sortBy, setSortBy] = useState<'quality' | 'name' | 'favicon'>('quality');
+
+  // Реактивный поиск с задержкой
+  useEffect(() => {
+    if (!isInitialized) return;
+    
+    const triggerSearch = async () => {
+      if (searchQuery.trim().length < 2) return;
+      
+      setIsSearching(true);
+      onLog?.(`Query Broadcasting: ${searchQuery}`, 'info');
+      
+      try {
+        const results = await searchStreams(searchQuery);
+        setSuggestions(results);
+      } catch (e) {
+        onLog?.('Sync Interrupted', 'error');
+      } finally {
+        setIsSearching(false);
+      }
+    };
+
+    const timer = setTimeout(triggerSearch, 600);
+    return () => clearTimeout(timer);
+  }, [searchQuery, isInitialized, onLog]);
+
+  const purgeBadSignals = async () => {
+    onLog?.('Scrubbing Grid...', 'zap');
+    await new Promise(r => setTimeout(r, 1500));
+    setSuggestions(prev => prev.filter(s => (s.bitrate || 0) >= 128 || Math.random() > 0.4));
+    onLog?.('Grid Optimized', 'info');
+  };
+
+  return {
+    searchQuery,
+    setSearchQuery,
+    isSearching,
+    suggestions,
+    setSuggestions,
+    sortBy,
+    setSortBy,
+    purgeBadSignals
+  };
+};
