@@ -37,45 +37,6 @@ export const THEMES: ThemeScheme[] = [
     fontScale: 1.1,
     blur: '12px'
   },
-    {
-    id: 'midnight-blue',
-    name: 'Midnight Blue',
-    bg: '🔷#1a1f3a',
-    surface: '🔷rgba(32, 42, 68, 0.85)',
-    text: '🔷#e8f0ff',
-    accent: '🔷#4d7cff',
-    secondary: '🔷#2d4a9e',
-    isLight: false,
-    layout: 'MONOLITH',
-    fontSize: 1.0,
-    blur: '18px'
-  },
-  {
-    id: 'royal-purple',
-    name: 'Royal Purple',
-    bg: '🟣#2d1b4e',
-    surface: '🟣rgba(58, 35, 96, 0.8)',
-    text: '🟣#f5e6ff',
-    accent: '🟣#a855f7',
-    secondary: '🟣#7c3aed',
-    isLight: false,
-    layout: 'COCKPIT',
-    fontSize: 1.1,
-    blur: '20px'
-  },
-  {
-    id: 'forest-green',
-    name: 'Forest Green',
-    bg: '🟢#1a3a2e',
-    surface: '🟢rgba(28, 69, 54, 0.85)',
-    text: '🟢#e0f2e9',
-    accent: '🟢#10b981',
-    secondary: '🟢#059669',
-    isLight: false,
-    layout: 'MONOLITH',
-    fontSize: 1.0,
-    blur: '16px'
-  },
   {
     id: 'toxic-acid',
     name: 'Acid Matrix',
@@ -140,24 +101,21 @@ export const THEMES: ThemeScheme[] = [
     layout: 'CONTROL_PANEL',
     fontScale: 1.15,
     blur: '15px'
-      },
-      // === WINAMP-STYLE SKINS COLLECTION ===
-        // Classic Themes
-          {
-                id: 'midnight-blue',
-                    name: '🌙 Midnight Blue',
-                        bg: '#0a0e27',
-                            surface: 'rgba(30, 58, 138, 0.1)',
-                                text: '#60a5fa',
-                                    accent: '#3b82f6',
-                                        secondary: '#1e3a8a',
-                                            isLight: false,
-                                                layout: 'MONOLITH',
-                                                    fontScale: 1.1,
-                                                        blur: '18px'
-                                                          },
-  }
-    // Royal Purple
+  },
+  // === WINAMP-STYLE THEMES ===
+  {
+    id: 'midnight-blue',
+    name: '🌙 Midnight Blue',
+    bg: '#0a0e27',
+    surface: 'rgba(30, 58, 138, 0.1)',
+    text: '#60a5fa',
+    accent: '#3b82f6',
+    secondary: '#1e3a8a',
+    isLight: false,
+    layout: 'MONOLITH',
+    fontScale: 1.1,
+    blur: '18px'
+  },
   {
     id: 'royal-purple',
     name: '👑 Royal Purple',
@@ -171,7 +129,6 @@ export const THEMES: ThemeScheme[] = [
     fontScale: 1.15,
     blur: '16px'
   },
-    // Forest Green
   {
     id: 'forest-green',
     name: '🌲 Forest Green',
@@ -185,7 +142,6 @@ export const THEMES: ThemeScheme[] = [
     fontScale: 1.1,
     blur: '14px'
   },
-  // Cherry Red
   {
     id: 'cherry-red',
     name: '🍒 Cherry Red',
@@ -199,7 +155,6 @@ export const THEMES: ThemeScheme[] = [
     fontScale: 1.2,
     blur: '12px'
   },
-  // Ocean Teal
   {
     id: 'ocean-teal',
     name: '🌊 Ocean Teal',
@@ -213,7 +168,6 @@ export const THEMES: ThemeScheme[] = [
     fontScale: 1.05,
     blur: '20px'
   },
-    // Sunset Orange
   {
     id: 'sunset-orange',
     name: '🌅 Sunset Orange',
@@ -227,8 +181,6 @@ export const THEMES: ThemeScheme[] = [
     fontScale: 1.15,
     blur: '16px'
   },
-  // === Futuristic Themes ===
-  // Crystal Ice
   {
     id: 'crystal-ice',
     name: '💎 Crystal Ice',
@@ -242,7 +194,6 @@ export const THEMES: ThemeScheme[] = [
     fontScale: 1.1,
     blur: '22px'
   },
-  // Plasma Fire
   {
     id: 'plasma-fire',
     name: '🔥 Plasma Fire',
@@ -256,8 +207,6 @@ export const THEMES: ThemeScheme[] = [
     fontScale: 1.15,
     blur: '10px'
   },
-    // === Retro Themes ===
-  // Winamp Classic
   {
     id: 'winamp-classic',
     name: '🎵 Winamp Classic',
@@ -271,7 +220,6 @@ export const THEMES: ThemeScheme[] = [
     fontScale: 1.0,
     blur: '8px'
   },
-  // Windows 95
   {
     id: 'windows-95',
     name: '💾 Windows 95',
@@ -285,7 +233,6 @@ export const THEMES: ThemeScheme[] = [
     fontScale: 1.0,
     blur: '0px'
   },
-  // Vapor Wave
   {
     id: 'vapor-wave',
     name: '🌴 Vapor Wave',
@@ -299,7 +246,6 @@ export const THEMES: ThemeScheme[] = [
     fontScale: 1.15,
     blur: '18px'
   },
-  // Golden Hour
   {
     id: 'golden-hour',
     name: '✨ Golden Hour',
@@ -314,7 +260,6 @@ export const THEMES: ThemeScheme[] = [
     blur: '16px'
   },
   // === NEW WINAMP-STYLE THEMES ===
-  // Neon Pink
   {
     id: 'neon-pink',
     name: '💗 Neon Pink',
@@ -328,7 +273,6 @@ export const THEMES: ThemeScheme[] = [
     fontScale: 1.2,
     blur: '14px'
   },
-  // Electric Blue
   {
     id: 'electric-blue',
     name: '⚡ Electric Blue',
@@ -342,7 +286,6 @@ export const THEMES: ThemeScheme[] = [
     fontScale: 1.15,
     blur: '18px'
   },
-  // Cyber Green
   {
     id: 'cyber-green',
     name: '🟢 Cyber Green',
@@ -356,7 +299,6 @@ export const THEMES: ThemeScheme[] = [
     fontScale: 1.1,
     blur: '16px'
   },
-  // Hot Orange
   {
     id: 'hot-orange',
     name: '🔥 Hot Orange',
@@ -370,7 +312,6 @@ export const THEMES: ThemeScheme[] = [
     fontScale: 1.25,
     blur: '12px'
   },
-  // Deep Purple
   {
     id: 'deep-purple',
     name: '🟣 Deep Purple',
