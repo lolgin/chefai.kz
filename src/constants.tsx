@@ -274,6 +274,7 @@ export const THEMES: ThemeScheme[] = [
     blur: '16px'
   }
 ];
+];
 
 export const GENRES_BY_PROVIDER: Record<Provider | string, (Genre | string)[]> = {
   [Provider.GENERATIVE_AI]: [
