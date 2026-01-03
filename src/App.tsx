@@ -53,6 +53,7 @@ import { NodesModule } from './components/Modules/NodesModule';
 import { ThemesModule } from './components/Modules/ThemesModule';
 import { LogsModule } from './components/Modules/LogsModule';
 import { EQModule } from './components/Modules/EQModule';
+import { DisplayModule } from './components/Modules/DisplayModule';
 
 // Сервисы и константы
 import { audioEngine } from './services/audioEngine';
@@ -77,7 +78,7 @@ const AppContent: React.FC = () => {
 
   // Используем хуки и контексты
   const { systemLogs, addLog } = useSystemLogs();
-  const { settings, theme, updateSettings } = useSettings();
+  const { settings, theme, updateSettings, updateDisplaySettings } = useSettings();
   const { metadata, statusMessage, updateMetadata, fetchAIMetadata } = useMetadata();
   
   const {
@@ -193,7 +194,8 @@ const AppContent: React.FC = () => {
     { id: 'nodes' as ModuleType, icon: <Database size={20} />, label: 'NODES' },
     { id: 'eq' as ModuleType, icon: <Sliders size={20} />, label: 'EQ' },
     { id: 'themes' as ModuleType, icon: <Palette size={20} />, label: 'THEME' },
-    { id: 'intel' as ModuleType, icon: <Monitor size={20} />, label: 'INTEL' }
+    { id: 'display' as ModuleType, icon: <Monitor size={20} />, label: 'DISPLAY' },
+    { id: 'intel' as ModuleType, icon: <Activity size={20} />, label: 'INTEL' }
   ];
 
   // Обработчики для Left Panel
@@ -364,6 +366,13 @@ const AppContent: React.FC = () => {
                     isDragging={isDragging}
                     onDragStart={() => setIsDragging(true)}
                     onDragEnd={() => setIsDragging(false)}
+                  />
+                )}
+
+                {activeModule === 'display' && (
+                  <DisplayModule
+                    displaySettings={settings.display!}
+                    onUpdate={updateDisplaySettings}
                   />
                 )}
 

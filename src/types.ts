@@ -115,6 +115,29 @@ export interface ThemeScheme {
   layout: LayoutType;
   fontScale: number;
   blur: string;
+  glass?: boolean; // Стеклянный эффект
+  borderRadius?: string; // Радиус скругления
+  shadowIntensity?: number; // Интенсивность теней
+}
+
+export interface DisplaySettings {
+  fontSize: 'xs' | 'sm' | 'md' | 'lg' | 'xl' | 'xxl';
+  iconSize: 'sm' | 'md' | 'lg' | 'xl';
+  compactMode: boolean;
+  glassEffect: boolean;
+  randomColors: boolean; // Случайные цвета для элементов
+  animationSpeed: 'slow' | 'normal' | 'fast';
+  borderStyle: 'none' | 'solid' | 'gradient' | 'glow';
+  spacing: 'tight' | 'normal' | 'relaxed';
+}
+
+export interface ModuleCustomization {
+  moduleId: string;
+  customColor?: string;
+  opacity?: number;
+  blur?: number;
+  scale?: number;
+  visible?: boolean;
 }
 
 export interface AppSettings {
@@ -123,6 +146,8 @@ export interface AppSettings {
   customNodes: CustomNode[];
   favorites: FavoriteNode[];
   blacklist: string[];
+  display?: DisplaySettings;
+  moduleCustomizations?: ModuleCustomization[];
 }
 
 export type VisualizerTheme = 'cyberpunk' | 'retro' | 'minimalist' | 'default';

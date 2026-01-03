@@ -11,6 +11,71 @@ export const PROVIDERS = [
 ];
 
 export const THEMES: ThemeScheme[] = [
+  // === LIGHT GLASS THEMES ===
+  {
+    id: 'glass-frost',
+    name: '❄️ Glass Frost',
+    bg: 'linear-gradient(135deg, #e0f2fe 0%, #f0f9ff 100%)',
+    surface: 'rgba(255, 255, 255, 0.6)',
+    text: '#0f172a',
+    accent: '#0ea5e9',
+    secondary: '#38bdf8',
+    isLight: true,
+    layout: 'MONOLITH',
+    fontScale: 1.4,
+    blur: '32px',
+    glass: true,
+    borderRadius: '24px',
+    shadowIntensity: 0.15
+  },
+  {
+    id: 'crystal-clear',
+    name: '💎 Crystal Clear',
+    bg: 'linear-gradient(135deg, #fef3c7 0%, #fef9c3 50%, #e0f2fe 100%)',
+    surface: 'rgba(255, 255, 255, 0.5)',
+    text: '#1e293b',
+    accent: '#f59e0b',
+    secondary: '#06b6d4',
+    isLight: true,
+    layout: 'CONTROL_PANEL',
+    fontScale: 1.5,
+    blur: '40px',
+    glass: true,
+    borderRadius: '32px',
+    shadowIntensity: 0.2
+  },
+  {
+    id: 'lavender-mist',
+    name: '🌸 Lavender Mist',
+    bg: 'linear-gradient(135deg, #fae8ff 0%, #ede9fe 50%, #ddd6fe 100%)',
+    surface: 'rgba(255, 255, 255, 0.55)',
+    text: '#1e1b4b',
+    accent: '#a855f7',
+    secondary: '#c084fc',
+    isLight: true,
+    layout: 'GHOST',
+    fontScale: 1.45,
+    blur: '36px',
+    glass: true,
+    borderRadius: '28px',
+    shadowIntensity: 0.18
+  },
+  {
+    id: 'mint-fresh',
+    name: '🍃 Mint Fresh',
+    bg: 'linear-gradient(135deg, #d1fae5 0%, #a7f3d0 50%, #6ee7b7 100%)',
+    surface: 'rgba(255, 255, 255, 0.65)',
+    text: '#064e3b',
+    accent: '#10b981',
+    secondary: '#34d399',
+    isLight: true,
+    layout: 'DATAVIEW',
+    fontScale: 1.35,
+    blur: '30px',
+    glass: true,
+    borderRadius: '20px',
+    shadowIntensity: 0.12
+  },
   {
     id: 'frost',
     name: 'Clean Frost',
@@ -21,8 +86,9 @@ export const THEMES: ThemeScheme[] = [
     secondary: '#818cf8',
     isLight: true,
     layout: 'MONOLITH',
-    fontScale: 1.2,
-    blur: '24px'
+    fontScale: 1.3,
+    blur: '24px',
+    borderRadius: '16px'
   },
   {
     id: 'neon-overdrive',

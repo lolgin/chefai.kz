@@ -11,7 +11,7 @@
  */
 
 import React, { createContext, useContext, useState, useEffect, ReactNode, useMemo } from 'react';
-import { AppSettings, ThemeScheme, CustomNode, FavoriteNode } from '../types';
+import { AppSettings, ThemeScheme, CustomNode, FavoriteNode, DisplaySettings } from '../types';
 import { THEMES } from '../constants';
 
 interface SettingsContextType {
@@ -23,12 +23,13 @@ interface SettingsContextType {
   removeCustomNode: (id: string) => void;
   addFavorite: (node: FavoriteNode) => void;
   removeFavorite: (url: string) => void;
+  updateDisplaySettings: (updates: Partial<DisplaySettings>) => void;
 }
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
 
 const DEFAULT_SETTINGS: AppSettings = {
-  themeId: 'frost',
+  themeId: 'glass-frost',
   equalizer: {
     bands: { '32': 0, '64': 0, '125': 0, '250': 0, '500': 0, '1k': 0, '2k': 0, '4k': 0, '8k': 0, '16k': 0 },
     preamp: 1,
@@ -38,10 +39,21 @@ const DEFAULT_SETTINGS: AppSettings = {
   },
   customNodes: [],
   favorites: [],
-  blacklist: []
+  blacklist: [],
+  display: {
+    fontSize: 'lg',
+    iconSize: 'lg',
+    compactMode: false,
+    glassEffect: true,
+    randomColors: false,
+    animationSpeed: 'normal',
+    borderStyle: 'gradient',
+    spacing: 'normal'
+  },
+  moduleCustomizations: []
 };
 
-const STORAGE_KEY = 'aurawave_v27_settings';
+const STORAGE_KEY = 'aurawave_v28_settings';
 
 export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [settings, setSettings] = useState<AppSettings>(() => {
@@ -70,6 +82,13 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
 
   const updateSettings = (updates: Partial<AppSettings>) => {
     setSettings(prev => ({ ...prev, ...updates }));
+  };
+
+  const updateDisplaySettings = (updates: Partial<DisplaySettings>) => {
+    setSettings(prev => ({
+      ...prev,
+      display: { ...prev.display!, ...updates }
+    }));
   };
 
   const resetSettings = () => {
@@ -109,6 +128,7 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
     settings,
     theme,
     updateSettings,
+    updateDisplaySettings,
     resetSettings,
     addCustomNode,
     removeCustomNode,

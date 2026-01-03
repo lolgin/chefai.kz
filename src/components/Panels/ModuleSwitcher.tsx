@@ -11,7 +11,7 @@
 import React, { ReactNode } from 'react';
 import { useSettings } from '../../contexts/SettingsContext';
 
-export type ModuleType = 'none' | 'nodes' | 'discovery' | 'logs' | 'eq' | 'themes' | 'intel';
+export type ModuleType = 'none' | 'nodes' | 'discovery' | 'logs' | 'eq' | 'themes' | 'display' | 'intel';
 
 interface ModuleSwitcherProps {
   activeModule: ModuleType;
