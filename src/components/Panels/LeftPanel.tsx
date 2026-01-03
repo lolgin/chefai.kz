@@ -11,6 +11,8 @@
 import React from 'react';
 import { Hexagon } from 'lucide-react';
 import { Provider, CustomNode } from '../../types';
+import { useSettings } from '../../contexts/SettingsContext';
+import { useIconSize } from '../../hocs/withDisplaySettings';
 
 interface LeftPanelProps {
   isOpen: boolean;
@@ -31,17 +33,19 @@ export const LeftPanel: React.FC<LeftPanelProps> = ({
   currentGenre,
   onGenreClick,
   getGenreUrl,
-  theme
 }) => {
+  const { theme } = useSettings();
+  const iconSize = useIconSize();
+  
   return (
     <div
       className="hidden lg:flex transition-all duration-500 border-r bg-black/5 flex-col overflow-hidden"
-      style={{ borderColor: `${theme.text}11`, width: isOpen ? '280px' : '0' }}
+      style={{ borderColor: `${theme.text}11`, width: isOpen ? '320px' : '0' }}
     >
       <div className="p-6 w-80 h-full overflow-y-auto no-scrollbar space-y-6">
-        <h3 className="text-[10px] font-black uppercase tracking-widest flex items-center gap-2"
-            style={{ color: theme.text }}>
-          <Hexagon size={12} /> NEURAL_CORE
+        <h3 className="text-sm font-black uppercase tracking-widest flex items-center gap-3"
+            style={{ color: theme.text, fontSize: iconSize }}>
+          <Hexagon size={iconSize * 1.5} /> NEURAL_CORE
         </h3>
         
         {providers.map(p => {
@@ -50,8 +54,9 @@ export const LeftPanel: React.FC<LeftPanelProps> = ({
             : genresByProvider[p.id] || [];
           
           return (
-            <div key={p.id} className="space-y-1">
-              <div className="text-[7px] font-black uppercase opacity-20 mb-1.5 px-3 tracking-tighter">
+            <div key={p.id} className="space-y-2">
+              <div className="text-xs font-black uppercase opacity-30 mb-2 px-3 tracking-wider"
+                   style={{ fontSize: iconSize * 0.7 }}>
                 {p.name}
               </div>
               
@@ -63,14 +68,17 @@ export const LeftPanel: React.FC<LeftPanelProps> = ({
                   <button
                     key={name}
                     onClick={() => url && onGenreClick(url, name, p.id as Provider, true)}
-                    className="w-full text-left px-3 py-1.5 rounded-lg text-[9px] font-black uppercase transition-all shadow-md"
+                    className="w-full text-left px-4 py-3 rounded-xl font-black uppercase transition-all shadow-md hover:scale-105"
                     style={{
-                      backgroundColor: currentGenre === name ? theme.accent : 'transparent',
+                      backgroundColor: currentGenre === name ? theme.accent : theme.surface,
                       color: currentGenre === name ? (theme.isLight ? '#000' : '#fff') : theme.text,
-                      opacity: currentGenre === name ? 1 : 0.6
+                      opacity: currentGenre === name ? 1 : 0.7,
+                      fontSize: iconSize * 0.75,
+                      borderWidth: currentGenre === name ? '2px' : '1px',
+                      borderColor: currentGenre === name ? theme.accent : `${theme.text}11`
                     }}
                     onMouseEnter={e => currentGenre !== name && (e.currentTarget.style.opacity = '1')}
-                    onMouseLeave={e => currentGenre !== name && (e.currentTarget.style.opacity = '0.6')}
+                    onMouseLeave={e => currentGenre !== name && (e.currentTarget.style.opacity = '0.7')}
                   >
                     {name}
                   </button>

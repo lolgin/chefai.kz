@@ -120,6 +120,16 @@ export interface ThemeScheme {
   shadowIntensity?: number; // Интенсивность теней
 }
 
+export interface CloudSettings {
+  viewMode: 'cloud' | 'grid' | 'list' | 'web'; // Режим отображения
+  cloudScale: number; // 0.5 - 2.0
+  rotationSpeed: number; // 0 - 5
+  showConnections: boolean; // Связи между элементами
+  connectionStyle: 'lines' | 'threads' | 'glow' | 'none';
+  sortBy: 'name' | 'popularity' | 'recent' | 'random';
+  filterTags: string[];
+}
+
 export interface DisplaySettings {
   fontSize: 'xs' | 'sm' | 'md' | 'lg' | 'xl' | 'xxl';
   iconSize: 'sm' | 'md' | 'lg' | 'xl';
@@ -129,6 +139,7 @@ export interface DisplaySettings {
   animationSpeed: 'slow' | 'normal' | 'fast';
   borderStyle: 'none' | 'solid' | 'gradient' | 'glow';
   spacing: 'tight' | 'normal' | 'relaxed';
+  cloudSettings?: CloudSettings; // Настройки облака тегов
 }
 
 export interface ModuleCustomization {

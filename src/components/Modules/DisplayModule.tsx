@@ -10,8 +10,8 @@
  */
 
 import React from 'react';
-import { Paintbrush, Type, Sparkles, Layers, Zap, Maximize } from 'lucide-react';
-import { DisplaySettings } from '../../types';
+import { Paintbrush, Type, Sparkles, Layers, Zap, Maximize, Cloud, Link, Grid3x3, List, Globe } from 'lucide-react';
+import { DisplaySettings, CloudSettings } from '../../types';
 import { Button } from '../UI/Button';
 
 interface DisplayModuleProps {
@@ -28,6 +28,32 @@ export const DisplayModule: React.FC<DisplayModuleProps> = ({
   const speeds = ['slow', 'normal', 'fast'] as const;
   const borderStyles = ['none', 'solid', 'gradient', 'glow'] as const;
   const spacings = ['tight', 'normal', 'relaxed'] as const;
+  
+  const viewModes = [
+    { id: 'cloud', icon: Cloud, label: 'Облако' },
+    { id: 'grid', icon: Grid3x3, label: 'Сетка' },
+    { id: 'list', icon: List, label: 'Список' },
+    { id: 'web', icon: Globe, label: 'Паутина' }
+  ] as const;
+  
+  const connectionStyles = ['lines', 'threads', 'glow', 'none'] as const;
+  const sortOptions = ['name', 'popularity', 'recent', 'random'] as const;
+
+  const cloudSettings = displaySettings.cloudSettings || {
+    viewMode: 'cloud',
+    cloudScale: 1.0,
+    rotationSpeed: 1.0,
+    showConnections: false,
+    connectionStyle: 'threads',
+    sortBy: 'popularity',
+    filterTags: []
+  };
+  
+  const updateCloudSettings = (updates: Partial<CloudSettings>) => {
+    onUpdate({
+      cloudSettings: { ...cloudSettings, ...updates }
+    });
+  };
 
   return (
     <div className="space-y-8 p-8">
@@ -128,6 +154,122 @@ export const DisplayModule: React.FC<DisplayModuleProps> = ({
               {speed.toUpperCase()}
             </Button>
           ))}
+        </div>
+      </div>
+      
+      {/* НОВЫЙ РАЗДЕЛ: Настройки Облака */}
+      <div className="space-y-6 pt-8 border-t-4 border-current/20">
+        <div className="flex items-center gap-3">
+          <Cloud size={32} className="text-cyan-400" />
+          <h2 className="text-2xl font-black uppercase">Облако Тегов</h2>
+        </div>
+        
+        {/* Режим просмотра */}
+        <div className="space-y-4">
+          <h3 className="text-base font-black uppercase opacity-70">Режим Отображения</h3>
+          <div className="grid grid-cols-4 gap-3">
+            {viewModes.map(mode => {
+              const Icon = mode.icon;
+              return (
+                <Button
+                  key={mode.id}
+                  size="sm"
+                  variant={cloudSettings.viewMode === mode.id ? 'primary' : 'secondary'}
+                  onClick={() => updateCloudSettings({ viewMode: mode.id })}
+                  icon={<Icon size={20} />}
+                >
+                  {mode.label}
+                </Button>
+              );
+            })}
+          </div>
+        </div>
+        
+        {/* Масштаб облака */}
+        <div className="space-y-3">
+          <h3 className="text-base font-black uppercase opacity-70">Масштаб Облака</h3>
+          <div className="flex items-center gap-4">
+            <span className="text-sm font-bold">0.5x</span>
+            <input
+              type="range"
+              min="0.5"
+              max="2"
+              step="0.1"
+              value={cloudSettings.cloudScale}
+              onChange={e => updateCloudSettings({ cloudScale: parseFloat(e.target.value) })}
+              className="flex-1 h-3 rounded-full appearance-none"
+            />
+            <span className="text-sm font-bold">2x</span>
+            <span className="text-lg font-black text-cyan-400 w-16 text-right">
+              {cloudSettings.cloudScale.toFixed(1)}x
+            </span>
+          </div>
+        </div>
+        
+        {/* Скорость вращения */}
+        <div className="space-y-3">
+          <h3 className="text-base font-black uppercase opacity-70">Скорость Вращения</h3>
+          <div className="flex items-center gap-4">
+            <span className="text-sm font-bold">0</span>
+            <input
+              type="range"
+              min="0"
+              max="5"
+              step="0.1"
+              value={cloudSettings.rotationSpeed}
+              onChange={e => updateCloudSettings({ rotationSpeed: parseFloat(e.target.value) })}
+              className="flex-1 h-3 rounded-full appearance-none"
+            />
+            <span className="text-sm font-bold">5</span>
+            <span className="text-lg font-black text-cyan-400 w-16 text-right">
+              {cloudSettings.rotationSpeed.toFixed(1)}
+            </span>
+          </div>
+        </div>
+        
+        {/* Стиль связей */}
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="text-base font-black uppercase opacity-70">Связи Между Элементами</h3>
+            <input
+              type="checkbox"
+              checked={cloudSettings.showConnections}
+              onChange={e => updateCloudSettings({ showConnections: e.target.checked })}
+              className="w-12 h-6 rounded-full appearance-none cursor-pointer"
+            />
+          </div>
+          
+          {cloudSettings.showConnections && (
+            <div className="grid grid-cols-4 gap-3">
+              {connectionStyles.map(style => (
+                <Button
+                  key={style}
+                  size="sm"
+                  variant={cloudSettings.connectionStyle === style ? 'primary' : 'secondary'}
+                  onClick={() => updateCloudSettings({ connectionStyle: style })}
+                >
+                  {style.toUpperCase()}
+                </Button>
+              ))}
+            </div>
+          )}
+        </div>
+        
+        {/* Сортировка */}
+        <div className="space-y-4">
+          <h3 className="text-base font-black uppercase opacity-70">Сортировка</h3>
+          <div className="grid grid-cols-4 gap-3">
+            {sortOptions.map(sort => (
+              <Button
+                key={sort}
+                size="sm"
+                variant={cloudSettings.sortBy === sort ? 'primary' : 'secondary'}
+                onClick={() => updateCloudSettings({ sortBy: sort })}
+              >
+                {sort.toUpperCase()}
+              </Button>
+            ))}
+          </div>
         </div>
       </div>
 
