@@ -1,0 +1,7 @@
+{
+  "name": "AuraWave Light Core",
+  "description": "Next-gen polymorphic radio experience with isomorphic layout transitions and global frequency aggregation.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}

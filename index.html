@@ -1,0 +1,92 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>AuraWave_OS // Light Core Console</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;600;700&family=Syncopate:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --glass-bg: rgba(255, 255, 255, 0.7);
+            --glass-border: rgba(255, 255, 255, 0.4);
+            --shadow-soft: 0 20px 50px rgba(0, 0, 0, 0.05);
+            --accent-main: #4f46e5;
+        }
+
+        body {
+            background: radial-gradient(circle at top left, #f0f4ff, #ffffff);
+            color: #1e1b4b;
+            font-family: 'Rajdhani', sans-serif;
+            overflow: hidden;
+            height: 100vh;
+            width: 100vw;
+            margin: 0;
+            transition: background 0.5s ease;
+        }
+
+        .font-orbitron { font-family: 'Orbitron', sans-serif; }
+        .font-syncopate { font-family: 'Syncopate', sans-serif; }
+        
+        #root { height: 100%; width: 100%; }
+
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        @keyframes marquee-text {
+            0% { transform: translateX(100%); }
+            100% { transform: translateX(-100%); }
+        }
+        .animate-marquee-text {
+            display: inline-block;
+            white-space: nowrap;
+            animation: marquee-text 15s linear infinite;
+        }
+
+        .scene-3d {
+            perspective: 1200px;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .cloud-3d {
+            position: relative;
+            width: 0;
+            height: 0;
+            transform-style: preserve-3d;
+            transition: transform 0.1s ease-out;
+        }
+        .shard-item {
+            position: absolute;
+            transform-style: preserve-3d;
+            backface-visibility: hidden;
+            white-space: nowrap;
+            cursor: pointer;
+            transition: color 0.3s, transform 0.3s;
+            user-select: none;
+        }
+        .shard-item:hover {
+            z-index: 100;
+            filter: brightness(1.5);
+        }
+    </style>
+<script type="importmap">
+{
+  "imports": {
+    "react": "https://esm.sh/react@^19.2.3",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
+    "react/": "https://esm.sh/react@^19.2.3/",
+    "@google/genai": "https://esm.sh/@google/genai@^1.34.0",
+    "d3": "https://esm.sh/d3@^7.9.0",
+    "lucide-react": "https://esm.sh/lucide-react@^0.562.0"
+  }
+}
+</script>
+</head>
+<body>
+    <div id="root"></div>
+</body>
+</html>
