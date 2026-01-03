@@ -232,18 +232,32 @@ const AppContent: React.FC = () => {
   // Экран инициализации
   if (!isInitialized) {
     return (
-      <div className="h-screen w-full flex flex-col items-center justify-center p-12 text-center animate-in zoom-in-50 duration-700" style={{ backgroundColor: theme.bg, color: theme.text }}>
-        <div className="w-40 h-40 mb-10 flex items-center justify-center rounded-[4rem] bg-indigo-600 text-white shadow-3xl animate-pulse">
-          <Cpu size={64} />
+      <div 
+        className="h-screen w-full flex flex-col items-center justify-center p-12 text-center animate-in zoom-in-50 duration-700" 
+        style={{ 
+          background: theme.bg.includes('gradient') ? theme.bg : undefined,
+          backgroundColor: theme.bg.includes('gradient') ? undefined : theme.bg, 
+          color: theme.text 
+        }}
+      >
+        <div 
+          className="w-48 h-48 mb-12 flex items-center justify-center rounded-[4rem] text-white shadow-3xl animate-pulse"
+          style={{ backgroundColor: theme.accent }}
+        >
+          <Cpu size={80} />
         </div>
-        <h1 className="text-6xl font-black font-syncopate uppercase tracking-widest mb-10">AURAWAVE</h1>
+        <h1 className="text-7xl font-black font-syncopate uppercase tracking-widest mb-12">AURAWAVE</h1>
         <button
           onClick={() => {
             audioEngine.init();
             setIsInitialized(true);
             addLog('Core Initialized', 'zap');
           }}
-          className="px-14 py-7 rounded-[3rem] bg-indigo-600 text-white font-black text-2xl uppercase transition-all shadow-2xl hover:scale-105 active:scale-95"
+          className="px-16 py-8 rounded-[3rem] font-black text-3xl uppercase transition-all shadow-2xl hover:scale-105 active:scale-95"
+          style={{ 
+            backgroundColor: theme.accent,
+            color: theme.isLight ? '#000' : '#fff'
+          }}
         >
           BOOT_SYSTEM
         </button>
@@ -252,12 +266,31 @@ const AppContent: React.FC = () => {
   }
 
   // Главный интерфейс
+  const glassStyle = settings.display?.glassEffect ? {
+    backdropFilter: 'blur(40px) saturate(180%)',
+    WebkitBackdropFilter: 'blur(40px) saturate(180%)',
+  } : {};
+
+  const bgStyle = theme.bg.includes('gradient') 
+    ? { background: theme.bg }
+    : { backgroundColor: theme.bg };
+
   return (
-    <div className="h-screen w-full flex flex-col transition-all duration-700 overflow-hidden relative" style={{ backgroundColor: theme.bg, color: theme.text }}>
+    <div 
+      className="h-screen w-full flex flex-col transition-all duration-700 overflow-hidden relative" 
+      style={{ ...bgStyle, color: theme.text }}
+    >
       <div className="flex-1 flex flex-col overflow-hidden">
         
         {/* Header OS Bar */}
-        <div className="w-full h-14 border-b flex items-center bg-black/5 z-50 backdrop-blur-md" style={{ borderColor: `${theme.text}11` }}>
+        <div 
+          className="w-full h-16 border-b flex items-center z-50" 
+          style={{ 
+            ...glassStyle,
+            borderColor: `${theme.text}11`,
+            backgroundColor: settings.display?.glassEffect ? theme.surface : 'rgba(0,0,0,0.05)'
+          }}
+        >
           <button onClick={() => setIsLeftPanelOpen(!isLeftPanelOpen)} className="h-full px-5 border-r hover:bg-black/10 transition-all" style={{ borderColor: `${theme.text}11` }}>
             <List size={18} />
           </button>
