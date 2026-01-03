@@ -3,6 +3,26 @@
  * 
  * Главный компонент приложения AuraWave
  * Теперь использует модульную структуру с контекстами и компонентами
+ * 
+ * @description
+ * AuraWave - это веб-приложение для потокового воспроизведения музыки с 3D визуализацией.
+ * Приложение было рефакторено из монолитного файла в модульную архитектуру для лучшей
+ * поддерживаемости и работы с AI-ассистентами.
+ * 
+ * @architecture
+ * - Contexts: AudioContext, SettingsContext, MetadataContext для глобального состояния
+ * - Hooks: useAudioPlayer, useStreamDiscovery, useSystemLogs для бизнес-логики
+ * - Components: Модульные UI компоненты (Player, Panels, Modules, Background)
+ * - Services: audioEngine, streamDiscovery, geminiService (не изменены)
+ * 
+ * @features
+ * - 3D визуализация с вращающимися облаками тегов
+ * - Поиск радиостанций через Radio Browser API
+ * - AI-генерация метаданных через Gemini API
+ * - Темы оформления (7 вариантов)
+ * - Эквалайзер и аудио эффекты
+ * - История воспроизведения
+ * - Пользовательские ноды (станции)
  */
 
 import React, { useState, useEffect, useMemo } from 'react';
