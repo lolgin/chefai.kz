@@ -12,6 +12,8 @@ View your app in AI Studio: https://ai.studio/apps/drive/1k-3u402rftSKiRFPfX94oW
 
 **Prerequisites:**  Node.js 18+
 
+> **🎓 Для новичков**: См. [BEGINNER_GUIDE.md](./BEGINNER_GUIDE.md) - объяснение как менять код простым языком
+> 
 > **🇷🇺 Подробная инструкция на русском**: См. [ЗАПУСК_ЛОКАЛЬНО.md](./ЗАПУСК_ЛОКАЛЬНО.md)
 > 
 > **🚀 Деплой на сервер**: См. [DEPLOYMENT_STRATEGY.md](./DEPLOYMENT_STRATEGY.md)
