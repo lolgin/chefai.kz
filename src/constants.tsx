@@ -312,8 +312,78 @@ export const THEMES: ThemeScheme[] = [
     layout: 'CONTROL_PANEL',
     fontScale: 1.1,
     blur: '16px'
+  },
+  // === NEW WINAMP-STYLE THEMES ===
+  // Neon Pink
+  {
+    id: 'neon-pink',
+    name: '💗 Neon Pink',
+    bg: '#2d0a1f',
+    surface: 'rgba(236, 72, 153, 0.12)',
+    text: '#f9a8d4',
+    accent: '#ec4899',
+    secondary: '#9f1239',
+    isLight: false,
+    layout: 'COCKPIT',
+    fontScale: 1.2,
+    blur: '14px'
+  },
+  // Electric Blue
+  {
+    id: 'electric-blue',
+    name: '⚡ Electric Blue',
+    bg: '#0a0f2d',
+    surface: 'rgba(59, 130, 246, 0.1)',
+    text: '#93c5fd',
+    accent: '#3b82f6',
+    secondary: '#1e3a8a',
+    isLight: false,
+    layout: 'DATAVIEW',
+    fontScale: 1.15,
+    blur: '18px'
+  },
+  // Cyber Green
+  {
+    id: 'cyber-green',
+    name: '🟢 Cyber Green',
+    bg: '#0a1f0a',
+    surface: 'rgba(34, 197, 94, 0.1)',
+    text: '#86efac',
+    accent: '#22c55e',
+    secondary: '#14532d',
+    isLight: false,
+    layout: 'MONOLITH',
+    fontScale: 1.1,
+    blur: '16px'
+  },
+  // Hot Orange
+  {
+    id: 'hot-orange',
+    name: '🔥 Hot Orange',
+    bg: '#2d1400',
+    surface: 'rgba(249, 115, 22, 0.12)',
+    text: '#fed7aa',
+    accent: '#f97316',
+    secondary: '#9a3412',
+    isLight: false,
+    layout: 'CONTROL_PANEL',
+    fontScale: 1.25,
+    blur: '12px'
+  },
+  // Deep Purple
+  {
+    id: 'deep-purple',
+    name: '🟣 Deep Purple',
+    bg: '#1f0a2e',
+    surface: 'rgba(147, 51, 234, 0.1)',
+    text: '#d8b4fe',
+    accent: '#9333ea',
+    secondary: '#581c87',
+    isLight: false,
+    layout: 'GHOST',
+    fontScale: 1.15,
+    blur: '20px'
   }
-];
 ];
 
 export const GENRES_BY_PROVIDER: Record<Provider | string, (Genre | string)[]> = {
