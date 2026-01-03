@@ -12,17 +12,20 @@ View your app in AI Studio: https://ai.studio/apps/drive/1k-3u402rftSKiRFPfX94oW
 
 **Prerequisites:**  Node.js 18+
 
+> **🇷🇺 Подробная инструкция на русском**: См. [ЗАПУСК_ЛОКАЛЬНО.md](./ЗАПУСК_ЛОКАЛЬНО.md)
+
 1. Install dependencies:
    ```bash
    npm install
    ```
 
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
+2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key (optional)
 
 3. Run the app:
    ```bash
    npm run dev
    ```
+   Open http://localhost:3000 in your browser
 
 4. Build for production:
    ```bash
