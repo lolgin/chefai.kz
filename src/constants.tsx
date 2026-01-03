@@ -140,6 +140,7 @@ export const THEMES: ThemeScheme[] = [
     layout: 'CONTROL_PANEL',
     fontScale: 1.15,
     blur: '15px'
+      },
       // === WINAMP-STYLE SKINS COLLECTION ===
         // Classic Themes
           {
