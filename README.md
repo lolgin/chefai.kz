@@ -153,6 +153,8 @@ src/
 
 ## 🐛 Troubleshooting
 
+**Белый экран при развертывании?** См. [TROUBLESHOOTING.md](./TROUBLESHOOTING.md)
+
 **Build errors:**
 ```bash
 rm -rf node_modules dist
