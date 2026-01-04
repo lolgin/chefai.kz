@@ -602,21 +602,6 @@ const AppContent: React.FC = () => {
               />
             )}
 
-            {/* Discovery поиск - показывается только для модуля discovery */}
-            {activeModule === 'discovery' && (
-              <div className="absolute top-24 left-1/2 -translate-x-1/2 w-full max-w-3xl px-4 z-50">
-                <div className="flex items-center bg-black/80 backdrop-blur-xl p-6 rounded-[2.5rem] border-2 border-indigo-600/30 shadow-2xl">
-                  <Search size={24} className="opacity-40 mr-6 text-white" />
-                  <input
-                    type="text"
-                    value={searchQuery}
-                    onChange={e => setSearchQuery(e.target.value)}
-                    placeholder="FREQUENCY_EXPLORATION..."
-                    className="bg-transparent flex-1 text-xl font-black uppercase outline-none text-white placeholder:text-white/20"
-                  />
-                </div>
-              </div>
-            )}
             
             {/* Кнопка закрытия модуля */}
             {activeModule !== 'none' && (
@@ -652,84 +637,108 @@ const AppContent: React.FC = () => {
           {/* Feed Metadata */}
           <TrackInfo metadata={metadata} onCopyMetadata={copyMetadata} />
           
-          {/* Quick Display Settings */}
-          <div className="flex items-center gap-2 opacity-30 hover:opacity-100 transition-opacity">
-            {/* Visualization Provider Selector */}
-            <button
-              onClick={() => {
-                const providers = getAllVisualizationProviders();
-                const current = settings.displaySettings?.visualizationProvider || VisualizationProvider.THREEJS_PLANETS;
-                const currentIndex = providers.findIndex(p => p.id === current);
-                const next = providers[(currentIndex + 1) % providers.length];
-                updateDisplaySettings({ visualizationProvider: next.id });
-                addLog(`Viz: ${next.name}`, 'info');
-              }}
-              className="p-2 rounded-lg hover:bg-white/10 transition-all"
-              style={{ color: theme.accent }}
-              title={`Visualization: ${getAllVisualizationProviders().find(p => p.id === (settings.displaySettings?.visualizationProvider || VisualizationProvider.THREEJS_PLANETS))?.name || 'Planets'}`}
-            >
-              <Orbit size={16} />
-            </button>
+          {/* Compact Search */}
+          <div className="flex items-center gap-3">
+            {/* Quick Display Settings */}
+            <div className="flex items-center gap-2 opacity-30 hover:opacity-100 transition-opacity">
+              {/* Visualization Provider Selector */}
+              <button
+                onClick={() => {
+                  const providers = getAllVisualizationProviders();
+                  const current = settings.displaySettings?.visualizationProvider || VisualizationProvider.THREEJS_PLANETS;
+                  const currentIndex = providers.findIndex(p => p.id === current);
+                  const next = providers[(currentIndex + 1) % providers.length];
+                  updateDisplaySettings({ visualizationProvider: next.id });
+                  addLog(`Viz: ${next.name}`, 'info');
+                }}
+                className="p-2 rounded-lg hover:bg-white/10 transition-all"
+                style={{ color: theme.accent }}
+                title={`Visualization: ${getAllVisualizationProviders().find(p => p.id === (settings.displaySettings?.visualizationProvider || VisualizationProvider.THREEJS_PLANETS))?.name || 'Planets'}`}
+              >
+                <Orbit size={16} />
+              </button>
+              
+              {/* Enable/Disable Visualization */}
+              <button
+                onClick={() => {
+                  const enabled = settings.displaySettings?.visualizationEnabled ?? true;
+                  updateDisplaySettings({ visualizationEnabled: !enabled });
+                  addLog(enabled ? 'Viz: OFF' : 'Viz: ON', 'info');
+                }}
+                className="p-2 rounded-lg hover:bg-white/10 transition-all"
+                style={{ 
+                  color: theme.text,
+                  opacity: (settings.displaySettings?.visualizationEnabled ?? true) ? 1 : 0.2
+                }}
+                title="Toggle Visualization"
+              >
+                <Eye size={16} />
+              </button>
+              
+              {/* Font Size */}
+              <button
+                onClick={() => {
+                  const sizes = ['xs', 'sm', 'md', 'lg', 'xl', 'xxl'] as const;
+                  const current = settings.displaySettings?.fontSize || 'lg';
+                  const next = sizes[(sizes.indexOf(current) + 1) % sizes.length];
+                  updateDisplaySettings({ fontSize: next });
+                }}
+                className="p-2 rounded-lg hover:bg-white/10 transition-all"
+                style={{ color: theme.text }}
+                title="Font Size"
+              >
+                <Type size={16} />
+              </button>
+              
+              {/* Icon Size */}
+              <button
+                onClick={() => {
+                  const sizes = ['sm', 'md', 'lg', 'xl'] as const;
+                  const current = settings.displaySettings?.iconSize || 'lg';
+                  const next = sizes[(sizes.indexOf(current) + 1) % sizes.length];
+                  updateDisplaySettings({ iconSize: next });
+                }}
+                className="p-2 rounded-lg hover:bg-white/10 transition-all"
+                style={{ color: theme.text }}
+                title="Icon Size"
+              >
+                <Maximize size={16} />
+              </button>
+              
+              {/* Glass Effect */}
+              <button
+                onClick={() => updateDisplaySettings({ glassEffect: !settings.displaySettings?.glassEffect })}
+                className="p-2 rounded-lg hover:bg-white/10 transition-all"
+                style={{ 
+                  color: theme.text,
+                  opacity: settings.displaySettings?.glassEffect ? 1 : 0.3
+                }}
+                title="Glass Effect"
+              >
+                <Sparkles size={16} />
+              </button>
+            </div>
             
-            {/* Enable/Disable Visualization */}
-            <button
-              onClick={() => {
-                const enabled = settings.displaySettings?.visualizationEnabled ?? true;
-                updateDisplaySettings({ visualizationEnabled: !enabled });
-                addLog(enabled ? 'Viz: OFF' : 'Viz: ON', 'info');
-              }}
-              className="p-2 rounded-lg hover:bg-white/10 transition-all"
-              style={{ 
-                color: theme.text,
-                opacity: (settings.displaySettings?.visualizationEnabled ?? true) ? 1 : 0.2
-              }}
-              title="Toggle Visualization"
-            >
-              <Eye size={16} />
-            </button>
-            
-            {/* Font Size */}
-            <button
-              onClick={() => {
-                const sizes = ['xs', 'sm', 'md', 'lg', 'xl', 'xxl'] as const;
-                const current = settings.displaySettings?.fontSize || 'lg';
-                const next = sizes[(sizes.indexOf(current) + 1) % sizes.length];
-                updateDisplaySettings({ fontSize: next });
-              }}
-              className="p-2 rounded-lg hover:bg-white/10 transition-all"
-              style={{ color: theme.text }}
-              title="Font Size"
-            >
-              <Type size={16} />
-            </button>
-            
-            {/* Icon Size */}
-            <button
-              onClick={() => {
-                const sizes = ['sm', 'md', 'lg', 'xl'] as const;
-                const current = settings.displaySettings?.iconSize || 'lg';
-                const next = sizes[(sizes.indexOf(current) + 1) % sizes.length];
-                updateDisplaySettings({ iconSize: next });
-              }}
-              className="p-2 rounded-lg hover:bg-white/10 transition-all"
-              style={{ color: theme.text }}
-              title="Icon Size"
-            >
-              <Maximize size={16} />
-            </button>
-            
-            {/* Glass Effect */}
-            <button
-              onClick={() => updateDisplaySettings({ glassEffect: !settings.displaySettings?.glassEffect })}
-              className="p-2 rounded-lg hover:bg-white/10 transition-all"
-              style={{ 
-                color: theme.text,
-                opacity: settings.displaySettings?.glassEffect ? 1 : 0.3
-              }}
-              title="Glass Effect"
-            >
-              <Sparkles size={16} />
-            </button>
+            {/* Compact Search Input */}
+            <div className="relative">
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                onFocus={() => setActiveModule('discovery')}
+                placeholder="Search stations..."
+                className="w-64 px-4 py-2 pr-10 text-sm rounded-full bg-black/20 backdrop-blur-xl border transition-all focus:w-96 focus:bg-black/40 outline-none"
+                style={{ 
+                  borderColor: activeModule === 'discovery' ? theme.accent : `${theme.text}22`,
+                  color: theme.text
+                }}
+              />
+              <Search 
+                size={16} 
+                className="absolute right-3 top-1/2 -translate-y-1/2 opacity-40 pointer-events-none"
+                style={{ color: theme.text }}
+              />
+            </div>
           </div>
 
           {/* Playback Hub */}
