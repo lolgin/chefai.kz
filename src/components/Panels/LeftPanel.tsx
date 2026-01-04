@@ -173,21 +173,29 @@ export const LeftPanel: React.FC<LeftPanelProps> = ({
                   <button
                     key={engine.id}
                     onClick={(e) => {
-                      e.stopPropagation(); // Предотвращаем всплытие
+                      e.stopPropagation();
                       if (isAvailable) {
                         updateDisplaySettings({ renderEngine: engine.id });
-                        // НЕ закрываем dropdown - пусть пользователь сам закроет
                       }
                     }}
                     disabled={!isAvailable}
-                    className="w-full px-6 py-5 flex items-start gap-5 hover:bg-white/10 transition-all text-left rounded-lg"
+                    className="w-full px-6 py-5 flex items-start gap-5 hover:bg-white/10 transition-all text-left rounded-lg relative"
                     style={{
                       backgroundColor: isActive ? `${theme.text}15` : 'transparent',
                       opacity: isAvailable ? 1 : 0.3,
                       cursor: isAvailable ? 'pointer' : 'not-allowed'
                     }}
                   >
-                    <span className="text-4xl mt-1">{engine.icon}</span>
+                    {/* Интерактивная пиктограмма с hover эффектом */}
+                    <span 
+                      className="text-4xl mt-1 transition-transform hover:scale-110 active:scale-95"
+                      style={{ 
+                        cursor: isAvailable ? 'pointer' : 'not-allowed',
+                        filter: isActive ? 'brightness(1.3)' : 'brightness(1)'
+                      }}
+                    >
+                      {engine.icon}
+                    </span>
                     <div className="flex-1">
                       <div className="flex items-center gap-3">
                         <span className="text-[22px] font-black uppercase tracking-wider" style={{ color: theme.text }}>

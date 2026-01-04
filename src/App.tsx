@@ -223,18 +223,30 @@ const AppContent: React.FC = () => {
     return Array.from(new Set([...parts, searchQuery.toUpperCase()])).slice(0, 15);
   }, [metadata, searchQuery]);
 
+  // Кеш для discoveryItems чтобы избежать пересоздания массива
+  const discoveryItemsCacheRef = useRef<any[]>([]);
+  const discoveryItemsHashRef = useRef<string>('');
+
   // Стабильные массивы для каждого модуля (мемоизация предотвращает ненужные пересоздания)
   const discoveryItems = useMemo(() => {
-    if (suggestions.length > 0) {
-      return suggestions.slice(0, 40);
+    // Создаем хеш текущего состояния
+    const currentHash = suggestions.length > 0 
+      ? suggestions.slice(0, 40).map(s => `${s.url}|${s.name}`).join('::')
+      : `query:${searchQuery}`;
+    
+    // Если хеш не изменился - возвращаем закешированный массив
+    if (currentHash === discoveryItemsHashRef.current) {
+      return discoveryItemsCacheRef.current;
     }
-    // Всегда возвращаем массив с одним элементом, чтобы избежать прыганий
-    const query = searchQuery.toUpperCase() || 'SEARCH';
-    return [query];
-  }, [
-    // КРИТИЧЕСКИ ВАЖНО: используем JSON.stringify для полного хеша
-    suggestions.length > 0 ? JSON.stringify(suggestions.slice(0, 40).map(s => ({ url: s.url, name: s.name }))) : `query:${searchQuery}`
-  ]);
+    
+    // Хеш изменился - создаем новый массив и кешируем
+    discoveryItemsHashRef.current = currentHash;
+    const newItems = suggestions.length > 0 
+      ? suggestions.slice(0, 40)
+      : [searchQuery.toUpperCase() || 'SEARCH'];
+    discoveryItemsCacheRef.current = newItems;
+    return newItems;
+  }, [suggestions, searchQuery]);
 
   const nodesItems = useMemo(() => {
     return [
