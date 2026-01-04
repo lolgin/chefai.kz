@@ -1,8 +1,9 @@
 /**
  * ShardCloudThreeJS.tsx
  * 
- * Простое 3D облако на базе Three.js (без спутников)
+ * 3D облако на базе Three.js с поддержкой провайдеров визуализации
  * Содержит:
+ * - Интеграция с системой провайдеров
  * - Сферы разных размеров и цветов
  * - Клики на объекты через raycasting
  * - Вращение мышью
@@ -10,6 +11,9 @@
 
 import React, { useRef, useEffect } from 'react';
 import * as THREE from 'three';
+import { useVisualizationProvider } from '../../hooks/useVisualizationProvider';
+import { VisualizationProvider } from '../../services/visualizationProviders';
+import { useSettings } from '../../contexts/SettingsContext';
 
 interface ShardCloudThreeJSProps {
   rotation: { x: number; y: number };
@@ -33,6 +37,22 @@ export const ShardCloudThreeJS: React.FC<ShardCloudThreeJSProps> = ({
   onShardClick,
   theme
 }) => {
+  const { settings } = useSettings();
+  
+  // Получаем провайдер визуализации из настроек
+  const currentProvider = (settings.display?.visualizationProvider as VisualizationProvider) || VisualizationProvider.THREEJS_PLANETS;
+  
+  // Используем провайдер для генерации layout
+  const { layout: providedLayout } = useVisualizationProvider({
+    providerId: currentProvider,
+    items: shards.map(s => ({
+      id: typeof s.data === 'object' && s.data?.name ? s.data.name : String(s.data),
+      name: typeof s.data === 'object' && s.data?.name ? s.data.name : String(s.data),
+      ...s.data
+    })),
+    config: {}
+  });
+  
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const sceneRef = useRef<THREE.Scene | null>(null);
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
@@ -130,9 +150,18 @@ export const ShardCloudThreeJS: React.FC<ShardCloudThreeJSProps> = ({
     });
     objectsRef.current.clear();
 
-    // Создаём новые объекты
+    // Создаём новые объекты используя layout из провайдера
     shards.forEach((shard, index) => {
-      const radius = shard.size * 15; // Размер планеты
+      const itemId = typeof shard.data === 'object' && shard.data?.name ? shard.data.name : String(shard.data);
+      const position = providedLayout.get(itemId);
+      
+      // Используем позицию из провайдера или fallback к старой
+      const x = position?.x ?? shard.x;
+      const y = position?.y ?? shard.y;
+      const z = position?.z ?? shard.z;
+      const scale = position?.scale ?? 1.0;
+      
+      const radius = shard.size * 15 * scale; // Размер планеты с учетом scale
       const geometry = new THREE.SphereGeometry(radius, 32, 32);
       
       // Цвет от позиции
@@ -148,13 +177,18 @@ export const ShardCloudThreeJS: React.FC<ShardCloudThreeJSProps> = ({
       });
 
       const mesh = new THREE.Mesh(geometry, material);
-      mesh.position.set(shard.x, shard.y, shard.z);
+      mesh.position.set(x, y, z);
+      
+      // Применяем rotation из провайдера если есть
+      if (position?.rotation) {
+        mesh.rotation.set(position.rotation.x, position.rotation.y, position.rotation.z);
+      }
       
       // Сохраняем данные
       objectsRef.current.set(mesh, shard.data);
       scene.add(mesh);
     });
-  }, [shards]);
+  }, [shards, providedLayout]);
 
   // Применяем вращение
   useEffect(() => {

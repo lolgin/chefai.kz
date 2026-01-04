@@ -8,7 +8,6 @@
 import React from 'react';
 import { 
   Orbit, 
-  Galaxy, 
   Cloud, 
   Network, 
   Grid3x3, 
@@ -28,7 +27,7 @@ interface VisualizationSelectorProps {
 // Иконки для провайдеров
 const PROVIDER_ICONS: Record<VisualizationProvider, React.ReactNode> = {
   [VisualizationProvider.THREEJS_PLANETS]: <Orbit size={16} />,
-  [VisualizationProvider.THREEJS_GALAXY]: <Galaxy size={16} />,
+  [VisualizationProvider.THREEJS_GALAXY]: <Orbit size={16} />,
   [VisualizationProvider.THREEJS_NEBULA]: <Sparkles size={16} />,
   [VisualizationProvider.THREEJS_GRID]: <Grid3x3 size={16} />,
   [VisualizationProvider.CSS3D_CLOUD]: <Cloud size={16} />,
@@ -58,13 +57,14 @@ export const VisualizationSelector: React.FC<VisualizationSelectorProps> = ({
   const providers = useVisualizationProviders();
   
   // Группировка по категориям
+  type ProviderArray = ReturnType<typeof useVisualizationProviders>;
   const providersByCategory = providers.reduce((acc, provider) => {
     if (!acc[provider.category]) {
       acc[provider.category] = [];
     }
     acc[provider.category].push(provider);
     return acc;
-  }, {} as Record<string, typeof providers>);
+  }, {} as Record<string, ProviderArray>);
   
   return (
     <div className="space-y-4">
@@ -75,7 +75,7 @@ export const VisualizationSelector: React.FC<VisualizationSelectorProps> = ({
         Тип визуализации
       </h4>
       
-      {Object.entries(providersByCategory).map(([category, categoryProviders]) => (
+      {(Object.entries(providersByCategory) as [string, ProviderArray][]).map(([category, categoryProviders]) => (
         <div key={category} className="space-y-2">
           <div 
             className="text-[9px] font-bold uppercase tracking-wider opacity-60"

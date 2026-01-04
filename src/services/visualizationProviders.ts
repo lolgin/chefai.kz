@@ -10,6 +10,7 @@
  * - Легко расширяемая система через registry паттерн
  */
 
+import React from 'react';
 import { CloudFormation, CosmicObjectType } from '../types/cosmicTypes';
 
 // ============================================
