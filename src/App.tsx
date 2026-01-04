@@ -61,6 +61,7 @@ import { BUILT_IN_MODELS } from './constants/models';
 import { Provider, CloudLayout, CustomNode } from './types';
 import { DiscoveredStream } from './services/streamDiscovery';
 import { getAllVisualizationProviders, VisualizationProvider } from './services/visualizationProviders';
+import { RenderEngine } from './constants/renderEngines';
 
 // Основной компонент приложения с контекстами
 const AppContent: React.FC = () => {
@@ -482,8 +483,87 @@ const AppContent: React.FC = () => {
               modules={modules}
             />
 
-            {/* Background 3D Shards - условно отображаем CSS или Three.js версию */}
-            {settings.display?.use3DCosmicView ? (
+            {/* Background 3D Shards - выбор движка рендеринга */}
+            {(() => {
+              const currentEngine = settings.display?.renderEngine || RenderEngine.THREEJS;
+              
+              // CSS 3D движок (легковесный)
+              if (currentEngine === RenderEngine.CSS3D) {
+                return (
+                  <ShardCloud
+                    rotation={rotation}
+                    shards={mainCloudShards}
+                    onShardClick={(item) => {
+                      // item - это объект или строка в зависимости от модуля
+                      if (activeModule === 'themes') {
+                        // item - это объект Theme {id, name, colors, layout...}
+                      if (typeof item === 'object' && item.id) {
+                        updateSettings({ themeId: item.id });
+                      }
+                    } else if (activeModule === 'models') {
+                      // item - это объект Model3D {id, name, url, category...}
+                      if (typeof item === 'object' && item.id) {
+                        updateDisplaySettings({ tagModel: item.id });
+                        addLog(`Model: ${item.name}`, 'info');
+                      }
+                    } else if (activeModule === 'display') {
+                      // item - это провайдер визуализации {id, name}
+                      if (typeof item === 'object' && item.id) {
+                        console.log('✅ Switching visualization provider:', item.id);
+                        updateDisplaySettings({ visualizationProvider: item.id });
+                      }
+                    } else if (activeModule === 'nodes') {
+                      // item может быть: customNode {name, url, provider}, provider {id, name}, genre {name, url} или строка
+                      if (typeof item === 'object') {
+                        if ('url' in item && 'provider' in item) {
+                          // Это customNode
+                          handleTogglePlay(item.url, item.name, item.provider, false, {});
+                        } else if ('id' in item) {
+                          // Это provider объект - открываем поиск по его имени
+                          setSearchQuery(item.name);
+                          setActiveModule('discovery');
+                        } else if ('url' in item) {
+                          // Это genre объект с url
+                          const genreName = item.name || 'Unknown';
+                          handleTogglePlay(item.url, genreName, Provider.SOMAFM, false, {});
+                        } else if (typeof item.name === 'string') {
+                          // Объект только с name - ищем в GENRE_STREAMS
+                          const genreUrl = GENRE_STREAMS[item.name];
+                          if (genreUrl) {
+                            handleTogglePlay(genreUrl, item.name, Provider.SOMAFM, false, {});
+                          }
+                        }
+                      } else if (typeof item === 'string') {
+                        // Строковый жанр - ищем в GENRE_STREAMS
+                        const genreUrl = GENRE_STREAMS[item];
+                        if (genreUrl) {
+                          handleTogglePlay(genreUrl, item, Provider.SOMAFM, false, {});
+                        }
+                      }
+                    } else if (activeModule === 'discovery') {
+                      // item - это DiscoveredStream объект {name, url, favicon, bitrate...}
+                      if (typeof item === 'object' && 'url' in item) {
+                        handlePlayStream(item);
+                      }
+                    } else {
+                      // Дефолтное облако - строки, открываем поиск
+                      const searchTerm = typeof item === 'string' ? item : (item.name || '');
+                      setSearchQuery(searchTerm);
+                      setActiveModule('discovery');
+                      // Немедленно запускаем поиск без ожидания debounce
+                      instantSearch(searchTerm);
+                    }
+                    }}
+                    isDragging={isDragging}
+                    onDragStart={() => setIsDragging(true)}
+                    onDragEnd={() => setIsDragging(false)}
+                    theme={theme}
+                  />
+                );
+              }
+              
+              // Three.js движок (стандартный WebGL)
+              return (
               <ShardCloudThreeJS
                 rotation={rotation}
                 shards={mainCloudShards}
@@ -547,76 +627,6 @@ const AppContent: React.FC = () => {
                     // Немедленно запускаем поиск без ожидания debounce
                     instantSearch(searchTerm);
                   }
-                }}
-                isDragging={isDragging}
-                onDragStart={() => setIsDragging(true)}
-                onDragEnd={() => setIsDragging(false)}
-                theme={theme}
-              />
-            ) : (
-              <ShardCloud
-                rotation={rotation}
-                shards={mainCloudShards}
-                onShardClick={(item) => {
-                  // item - это объект или строка в зависимости от модуля
-                  if (activeModule === 'themes') {
-                    // item - это объект Theme {id, name, colors, layout...}
-                  if (typeof item === 'object' && item.id) {
-                    updateSettings({ themeId: item.id });
-                  }
-                } else if (activeModule === 'models') {
-                  // item - это объект Model3D {id, name, url, category...}
-                  if (typeof item === 'object' && item.id) {
-                    updateDisplaySettings({ tagModel: item.id });
-                    addLog(`Model: ${item.name}`, 'info');
-                  }
-                } else if (activeModule === 'display') {
-                  // item - это провайдер визуализации {id, name}
-                  if (typeof item === 'object' && item.id) {
-                    console.log('✅ Switching visualization provider:', item.id);
-                    updateDisplaySettings({ visualizationProvider: item.id });
-                  }
-                } else if (activeModule === 'nodes') {
-                  // item может быть: customNode {name, url, provider}, provider {id, name}, genre {name, url} или строка
-                  if (typeof item === 'object') {
-                    if ('url' in item && 'provider' in item) {
-                      // Это customNode
-                      handleTogglePlay(item.url, item.name, item.provider, false, {});
-                    } else if ('id' in item) {
-                      // Это provider объект - открываем поиск по его имени
-                      setSearchQuery(item.name);
-                      setActiveModule('discovery');
-                    } else if ('url' in item) {
-                      // Это genre объект с url
-                      const genreName = item.name || 'Unknown';
-                      handleTogglePlay(item.url, genreName, Provider.SOMAFM, false, {});
-                    } else if (typeof item.name === 'string') {
-                      // Объект только с name - ищем в GENRE_STREAMS
-                      const genreUrl = GENRE_STREAMS[item.name];
-                      if (genreUrl) {
-                        handleTogglePlay(genreUrl, item.name, Provider.SOMAFM, false, {});
-                      }
-                    }
-                  } else if (typeof item === 'string') {
-                    // Строковый жанр - ищем в GENRE_STREAMS
-                    const genreUrl = GENRE_STREAMS[item];
-                    if (genreUrl) {
-                      handleTogglePlay(genreUrl, item, Provider.SOMAFM, false, {});
-                    }
-                  }
-                } else if (activeModule === 'discovery') {
-                  // item - это DiscoveredStream объект {name, url, favicon, bitrate...}
-                  if (typeof item === 'object' && 'url' in item) {
-                    handlePlayStream(item);
-                  }
-                } else {
-                  // Дефолтное облако - строки, открываем поиск
-                  const searchTerm = typeof item === 'string' ? item : (item.name || '');
-                  setSearchQuery(searchTerm);
-                  setActiveModule('discovery');
-                  // Немедленно запускаем поиск без ожидания debounce
-                  instantSearch(searchTerm);
-                }
                 }}
                 isDragging={isDragging}
                 onDragStart={() => setIsDragging(true)}
