@@ -50,6 +50,7 @@ const DEFAULT_SETTINGS: AppSettings = {
     borderStyle: 'gradient',
     use3DCosmicView: true, // Новая опция для переключения между CSS 3D и Three.js
     spacing: 'normal',
+    visualizationProvider: undefined, // Провайдер визуализации отключен по умолчанию
     cloudSettings: {
       viewMode: 'cloud',
       cloudScale: 1.0,

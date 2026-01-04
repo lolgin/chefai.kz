@@ -662,6 +662,65 @@ const AppContent: React.FC = () => {
         <div className="h-28 border-t flex items-center justify-between px-10 bg-black/5 z-[300] backdrop-blur-3xl" style={{ borderColor: `${theme.text}11` }}>
           {/* Feed Metadata */}
           <TrackInfo metadata={metadata} onCopyMetadata={copyMetadata} />
+          
+          {/* Quick Display Settings */}
+          <div className="flex items-center gap-2 opacity-30 hover:opacity-100 transition-opacity">
+            {/* Font Size */}
+            <button
+              onClick={() => {
+                const sizes = ['xs', 'sm', 'md', 'lg', 'xl', 'xxl'] as const;
+                const current = settings.displaySettings?.fontSize || 'lg';
+                const next = sizes[(sizes.indexOf(current) + 1) % sizes.length];
+                updateDisplaySettings({ fontSize: next });
+              }}
+              className="p-2 rounded-lg hover:bg-white/10 transition-all"
+              style={{ color: theme.text }}
+              title="Font Size"
+            >
+              <Type size={16} />
+            </button>
+            
+            {/* Icon Size */}
+            <button
+              onClick={() => {
+                const sizes = ['sm', 'md', 'lg', 'xl'] as const;
+                const current = settings.displaySettings?.iconSize || 'lg';
+                const next = sizes[(sizes.indexOf(current) + 1) % sizes.length];
+                updateDisplaySettings({ iconSize: next });
+              }}
+              className="p-2 rounded-lg hover:bg-white/10 transition-all"
+              style={{ color: theme.text }}
+              title="Icon Size"
+            >
+              <Maximize size={16} />
+            </button>
+            
+            {/* Glass Effect */}
+            <button
+              onClick={() => updateDisplaySettings({ glassEffect: !settings.displaySettings?.glassEffect })}
+              className="p-2 rounded-lg hover:bg-white/10 transition-all"
+              style={{ 
+                color: theme.text,
+                opacity: settings.displaySettings?.glassEffect ? 1 : 0.3
+              }}
+              title="Glass Effect"
+            >
+              <Sparkles size={16} />
+            </button>
+            
+            {/* Compact Mode */}
+            <button
+              onClick={() => updateDisplaySettings({ compactMode: !settings.displaySettings?.compactMode })}
+              className="p-2 rounded-lg hover:bg-white/10 transition-all"
+              style={{ 
+                color: theme.text,
+                opacity: settings.displaySettings?.compactMode ? 1 : 0.3
+              }}
+              title="Compact Mode"
+            >
+              <Layers size={16} />
+            </button>
+          </div>
 
           {/* Playback Hub */}
           <div className="flex-1 flex flex-col items-center gap-3">
