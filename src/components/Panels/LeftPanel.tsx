@@ -172,10 +172,11 @@ export const LeftPanel: React.FC<LeftPanelProps> = ({
                 return (
                   <button
                     key={engine.id}
-                    onClick={() => {
+                    onClick={(e) => {
+                      e.stopPropagation(); // Предотвращаем всплытие
                       if (isAvailable) {
                         updateDisplaySettings({ renderEngine: engine.id });
-                        setIsEngineDropdownOpen(false);
+                        // НЕ закрываем dropdown - пусть пользователь сам закроет
                       }
                     }}
                     disabled={!isAvailable}

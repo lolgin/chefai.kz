@@ -228,11 +228,12 @@ const AppContent: React.FC = () => {
     if (suggestions.length > 0) {
       return suggestions.slice(0, 40);
     }
-    return [searchQuery.toUpperCase() || 'SEARCH'].filter(Boolean);
+    // Всегда возвращаем массив с одним элементом, чтобы избежать прыганий
+    const query = searchQuery.toUpperCase() || 'SEARCH';
+    return [query];
   }, [
-    // КРИТИЧЕСКИ ВАЖНО: зависим не от ссылки на массив, а от его содержимого!
-    // Создаем стабильный хеш из URL+NAME для предотвращения прыганий
-    suggestions.length > 0 ? suggestions.map(s => `${s.url}|${s.name}`).join('::') : searchQuery
+    // КРИТИЧЕСКИ ВАЖНО: используем JSON.stringify для полного хеша
+    suggestions.length > 0 ? JSON.stringify(suggestions.slice(0, 40).map(s => ({ url: s.url, name: s.name }))) : `query:${searchQuery}`
   ]);
 
   const nodesItems = useMemo(() => {
