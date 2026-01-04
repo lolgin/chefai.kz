@@ -26,7 +26,7 @@
  */
 
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
-import { Cpu, List, Globe, Database, Palette, Diamond, X, Search, Activity, Radio, Monitor } from 'lucide-react';
+import { Cpu, List, Globe, Database, Palette, Diamond, X, Search, Activity, Radio, Monitor, Type, Maximize, Sparkles, Layers } from 'lucide-react';
 
 // Контексты
 import { AudioProvider } from './contexts/AudioContext';
