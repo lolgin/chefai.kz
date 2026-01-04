@@ -226,7 +226,11 @@ const AppContent: React.FC = () => {
       return suggestions.slice(0, 40);
     }
     return [searchQuery.toUpperCase() || 'SEARCH'].filter(Boolean);
-  }, [suggestions, searchQuery]);
+  }, [
+    // КРИТИЧЕСКИ ВАЖНО: зависим не от ссылки на массив, а от его содержимого!
+    // Используем JSON.stringify для глубокого сравнения
+    suggestions.length > 0 ? suggestions.map(s => s.url).join(',') : searchQuery
+  ]);
 
   const nodesItems = useMemo(() => {
     return [
@@ -234,7 +238,10 @@ const AppContent: React.FC = () => {
       ...PROVIDERS,
       ...PROVIDERS.flatMap(p => GENRES_BY_PROVIDER[p.id as Provider] || [])
     ].slice(0, 45);
-  }, [settings.customNodes]);
+  }, [
+    // Зависим от содержимого customNodes, не от ссылки
+    settings.customNodes.map(n => n.url).join(',')
+  ]);
 
   // Фоновое облако - переключается в зависимости от активного модуля
   const mainCloudShards = useMemo(() => {

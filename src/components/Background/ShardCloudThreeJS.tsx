@@ -9,7 +9,7 @@
  * - Вращение мышью
  */
 
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useMemo } from 'react';
 import * as THREE from 'three';
 import { useVisualizationProvider } from '../../hooks/useVisualizationProvider';
 import { VisualizationProvider } from '../../services/visualizationProviders';
@@ -39,17 +39,23 @@ export const ShardCloudThreeJS: React.FC<ShardCloudThreeJSProps> = ({
 }) => {
   const { settings } = useSettings();
   
-  // Получаем провайдер визуализации из настроек
+  // Проверяем включен ли провайдер визуализации
+  const visualizationEnabled = settings.display?.visualizationEnabled !== false;
   const currentProvider = (settings.display?.visualizationProvider as VisualizationProvider) || VisualizationProvider.THREEJS_PLANETS;
   
-  // Используем провайдер для генерации layout
-  const { layout: providedLayout } = useVisualizationProvider({
-    providerId: currentProvider,
-    items: shards.map(s => ({
+  // Мемоизируем items чтобы избежать пересоздания при каждом рендере
+  const items = useMemo(() => {
+    return shards.map(s => ({
       id: typeof s.data === 'object' && s.data?.name ? s.data.name : String(s.data),
       name: typeof s.data === 'object' && s.data?.name ? s.data.name : String(s.data),
       ...s.data
-    })),
+    }));
+  }, [shards]);
+  
+  // Используем провайдер только если визуализация включена
+  const { layout: providedLayout } = useVisualizationProvider({
+    providerId: currentProvider,
+    items: visualizationEnabled ? items : [], // Пустой массив когда выключено
     config: {}
   });
   
@@ -150,16 +156,25 @@ export const ShardCloudThreeJS: React.FC<ShardCloudThreeJSProps> = ({
     });
     objectsRef.current.clear();
 
-    // Создаём новые объекты используя layout из провайдера
+    // Создаём новые объекты
     shards.forEach((shard, index) => {
       const itemId = typeof shard.data === 'object' && shard.data?.name ? shard.data.name : String(shard.data);
-      const position = providedLayout.get(itemId);
       
-      // Используем позицию из провайдера или fallback к старой
-      const x = position?.x ?? shard.x;
-      const y = position?.y ?? shard.y;
-      const z = position?.z ?? shard.z;
-      const scale = position?.scale ?? 1.0;
+      // КЛЮЧЕВОЕ ИЗМЕНЕНИЕ: используем позиции из провайдера ТОЛЬКО если визуализация включена
+      let x, y, z, scale;
+      if (visualizationEnabled) {
+        const position = providedLayout.get(itemId);
+        x = position?.x ?? shard.x;
+        y = position?.y ?? shard.y;
+        z = position?.z ?? shard.z;
+        scale = position?.scale ?? 1.0;
+      } else {
+        // Когда провайдер выключен - используем ТОЛЬКО дефолтные позиции из shards (стабильные из кеша)
+        x = shard.x;
+        y = shard.y;
+        z = shard.z;
+        scale = 1.0;
+      }
       
       const radius = shard.size * 15 * scale; // Размер планеты с учетом scale
       const geometry = new THREE.SphereGeometry(radius, 32, 32);
@@ -179,16 +194,25 @@ export const ShardCloudThreeJS: React.FC<ShardCloudThreeJSProps> = ({
       const mesh = new THREE.Mesh(geometry, material);
       mesh.position.set(x, y, z);
       
-      // Применяем rotation из провайдера если есть
-      if (position?.rotation) {
-        mesh.rotation.set(position.rotation.x, position.rotation.y, position.rotation.z);
+      // Применяем rotation из провайдера если есть И визуализация включена
+      if (visualizationEnabled) {
+        const position = providedLayout.get(itemId);
+        if (position?.rotation) {
+          mesh.rotation.set(position.rotation.x, position.rotation.y, position.rotation.z);
+        }
       }
       
       // Сохраняем данные
       objectsRef.current.set(mesh, shard.data);
       scene.add(mesh);
     });
-  }, [shards, providedLayout]);
+  }, [
+    shards, 
+    visualizationEnabled,
+    // КРИТИЧЕСКИ ВАЖНО: providedLayout НЕ должен быть в dependencies когда visualization выключена!
+    // Это предотвращает перерендер при каждом изменении items
+    ...(visualizationEnabled ? [providedLayout] : [])
+  ]);
 
   // Применяем вращение
   useEffect(() => {
