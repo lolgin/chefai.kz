@@ -54,6 +54,23 @@ export const useStreamDiscovery = ({ isInitialized, onLog }: UseStreamDiscoveryO
     onLog?.('Grid Optimized', 'info');
   };
 
+  // Немедленный поиск без debounce (для кликов по облаку)
+  const instantSearch = async (query: string) => {
+    if (!isInitialized || query.trim().length < 2) return;
+    
+    setIsSearching(true);
+    onLog?.(`Query Broadcasting: ${query}`, 'info');
+    
+    try {
+      const results = await searchStreams(query);
+      setSuggestions(results);
+    } catch (e) {
+      onLog?.('Sync Interrupted', 'error');
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
   return {
     searchQuery,
     setSearchQuery,
@@ -62,6 +79,7 @@ export const useStreamDiscovery = ({ isInitialized, onLog }: UseStreamDiscoveryO
     setSuggestions,
     sortBy,
     setSortBy,
-    purgeBadSignals
+    purgeBadSignals,
+    instantSearch
   };
 };

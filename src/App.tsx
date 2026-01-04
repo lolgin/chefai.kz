@@ -26,7 +26,7 @@
  */
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { Cpu, List, Terminal, Globe, Database, Sliders, Palette, Monitor, Diamond, X, Activity, Search } from 'lucide-react';
+import { Cpu, List, Globe, Database, Palette, Diamond, X, Search, Activity } from 'lucide-react';
 
 // Контексты
 import { AudioProvider } from './contexts/AudioContext';
@@ -51,9 +51,6 @@ import { ShardCloud } from './components/Background/ShardCloud';
 import { DiscoveryModule } from './components/Modules/DiscoveryModule';
 import { NodesModule } from './components/Modules/NodesModule';
 import { ThemesModule } from './components/Modules/ThemesModule';
-import { LogsModule } from './components/Modules/LogsModule';
-import { EQModule } from './components/Modules/EQModule';
-import { DisplayModule } from './components/Modules/DisplayModule';
 
 // Сервисы и константы
 import { audioEngine } from './services/audioEngine';
@@ -87,7 +84,8 @@ const AppContent: React.FC = () => {
     isSearching,
     suggestions,
     setSuggestions,
-    purgeBadSignals: originalPurge
+    purgeBadSignals: originalPurge,
+    instantSearch
   } = useStreamDiscovery({ isInitialized, onLog: addLog });
 
   const {
@@ -139,8 +137,31 @@ const AppContent: React.FC = () => {
     return Array.from(new Set([...parts, searchQuery.toUpperCase()])).slice(0, 15);
   }, [metadata, searchQuery]);
 
-  // Фоновое облако
+  // Фоновое облако - переключается в зависимости от активного модуля
   const mainCloudShards = useMemo(() => {
+    // Если активен модуль - показываем его облако с ПОЛНЫМИ ОБЪЕКТАМИ
+    if (activeModule === 'discovery') {
+      // Если поиск идет или suggestions пустой - показываем placeholder облако
+      if (isSearching || suggestions.length === 0) {
+        const placeholder = ['SEARCHING', 'LOADING', 'SCANNING', 'FREQUENCY', 'SIGNAL', 'BROADCAST', searchQuery.toUpperCase()];
+        return generateCloud(placeholder, 340);
+      }
+      // Сохраняем полные объекты DiscoveredStream для доступа к favicon, bitrate, url
+      return generateCloud(suggestions.slice(0, 40), 340);
+    } else if (activeModule === 'nodes') {
+      // Для nodes - микс из customNodes и жанров/провайдеров
+      const allNodes = [
+        ...settings.customNodes,
+        ...PROVIDERS,
+        ...PROVIDERS.flatMap(p => GENRES_BY_PROVIDER[p.id as Provider] || [])
+      ].slice(0, 45);
+      return generateCloud(allNodes, 340);
+    } else if (activeModule === 'themes') {
+      // Для themes - полные объекты с name, colors, layout
+      return generateCloud(THEMES, 340);
+    }
+    
+    // Дефолтное облако когда модуль не активен
     const parts = new Set<string>();
     if (shardSource === 'scan') {
       searchQuery.split(/[\s\-_,.]+/).forEach(p => { if (p.length > 3) parts.add(p.toUpperCase()); });
@@ -152,7 +173,7 @@ const AppContent: React.FC = () => {
     }
     const tags = Array.from(parts).slice(0, 50);
     return generateCloud(tags, 340);
-  }, [searchQuery, suggestions, systemLogs, shardSource]);
+  }, [searchQuery, suggestions, systemLogs, shardSource, activeModule, settings.customNodes, isSearching]);
 
   // Облако для модулей
   const moduleCloudItems = useMemo(() => {
@@ -192,10 +213,7 @@ const AppContent: React.FC = () => {
   const modules = [
     { id: 'discovery' as ModuleType, icon: <Globe size={20} />, label: 'SCAN' },
     { id: 'nodes' as ModuleType, icon: <Database size={20} />, label: 'NODES' },
-    { id: 'eq' as ModuleType, icon: <Sliders size={20} />, label: 'EQ' },
-    { id: 'themes' as ModuleType, icon: <Palette size={20} />, label: 'THEME' },
-    { id: 'display' as ModuleType, icon: <Monitor size={20} />, label: 'DISPLAY' },
-    { id: 'intel' as ModuleType, icon: <Activity size={20} />, label: 'INTEL' }
+    { id: 'themes' as ModuleType, icon: <Palette size={20} />, label: 'THEME' }
   ];
 
   // Обработчики для Left Panel
@@ -302,7 +320,7 @@ const AppContent: React.FC = () => {
             </div>
           </div>
           <button onClick={() => setIsRightPanelOpen(!isRightPanelOpen)} className="h-full px-5 border-l hover:bg-black/10 transition-all" style={{ borderColor: `${theme.text}11` }}>
-            <Terminal size={18} />
+            <Activity size={18} />
           </button>
         </div>
 
@@ -332,9 +350,54 @@ const AppContent: React.FC = () => {
             <ShardCloud
               rotation={rotation}
               shards={mainCloudShards}
-              onShardClick={(tag) => {
-                setSearchQuery(tag);
-                setActiveModule('discovery');
+              onShardClick={(item) => {
+                // item - это объект или строка в зависимости от модуля
+                if (activeModule === 'themes') {
+                  // item - это объект Theme {id, name, colors, layout...}
+                  if (typeof item === 'object' && item.id) {
+                    updateSettings({ themeId: item.id });
+                  }
+                } else if (activeModule === 'nodes') {
+                  // item может быть: customNode {name, url, provider}, provider {id, name}, genre {name, url} или строка
+                  if (typeof item === 'object') {
+                    if ('url' in item && 'provider' in item) {
+                      // Это customNode
+                      handleTogglePlay(item.url, item.name, item.provider, false, {});
+                    } else if ('id' in item) {
+                      // Это provider объект - открываем поиск по его имени
+                      setSearchQuery(item.name);
+                      setActiveModule('discovery');
+                    } else if ('url' in item) {
+                      // Это genre объект с url
+                      const genreName = item.name || 'Unknown';
+                      handleTogglePlay(item.url, genreName, Provider.SOMAFM, false, {});
+                    } else if (typeof item.name === 'string') {
+                      // Объект только с name - ищем в GENRE_STREAMS
+                      const genreUrl = GENRE_STREAMS[item.name];
+                      if (genreUrl) {
+                        handleTogglePlay(genreUrl, item.name, Provider.SOMAFM, false, {});
+                      }
+                    }
+                  } else if (typeof item === 'string') {
+                    // Строковый жанр - ищем в GENRE_STREAMS
+                    const genreUrl = GENRE_STREAMS[item];
+                    if (genreUrl) {
+                      handleTogglePlay(genreUrl, item, Provider.SOMAFM, false, {});
+                    }
+                  }
+                } else if (activeModule === 'discovery') {
+                  // item - это DiscoveredStream объект {name, url, favicon, bitrate...}
+                  if (typeof item === 'object' && 'url' in item) {
+                    handlePlayStream(item);
+                  }
+                } else {
+                  // Дефолтное облако - строки, открываем поиск
+                  const searchTerm = typeof item === 'string' ? item : (item.name || '');
+                  setSearchQuery(searchTerm);
+                  setActiveModule('discovery');
+                  // Немедленно запускаем поиск без ожидания debounce
+                  instantSearch(searchTerm);
+                }
               }}
               isDragging={isDragging}
               onDragStart={() => setIsDragging(true)}
@@ -342,78 +405,19 @@ const AppContent: React.FC = () => {
               theme={theme}
             />
 
-            {/* Neural Module Overlay */}
-            {activeModule !== 'none' && (
-              <div className="absolute inset-4 lg:inset-10 z-[200] rounded-[3rem] bg-white dark:bg-[#08090f] border-4 shadow-3xl p-6 lg:p-12 flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-300" style={{ borderColor: `${theme.text}22`, backdropFilter: `blur(${theme.blur})` }}>
-                <div className="flex justify-between items-center mb-8 border-b pb-6" style={{ borderColor: `${theme.text}11` }}>
-                  <div className="flex items-center gap-4">
-                    <div className="p-3 bg-indigo-600 rounded-2xl text-white shadow-xl">
-                      <Diamond size={20} />
-                    </div>
-                    <h2 className="text-xl font-black uppercase font-syncopate text-indigo-600 tracking-tighter">
-                      {activeModule.toUpperCase()}
-                    </h2>
-                  </div>
-                  <button onClick={() => toggleModule('none')} className="p-3 hover:bg-black/5 rounded-full transition-all hover:rotate-90">
-                    <X size={24} />
-                  </button>
+            {/* Discovery поиск - показывается только для модуля discovery */}
+            {activeModule === 'discovery' && (
+              <div className="absolute top-24 left-1/2 -translate-x-1/2 w-full max-w-3xl px-4 z-50">
+                <div className="flex items-center bg-black/80 backdrop-blur-xl p-6 rounded-[2.5rem] border-2 border-indigo-600/30 shadow-2xl">
+                  <Search size={24} className="opacity-40 mr-6 text-white" />
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={e => setSearchQuery(e.target.value)}
+                    placeholder="FREQUENCY_EXPLORATION..."
+                    className="bg-transparent flex-1 text-xl font-black uppercase outline-none text-white placeholder:text-white/20"
+                  />
                 </div>
-
-                {/* Отображение соответствующего модуля */}
-                {activeModule === 'discovery' && (
-                  <DiscoveryModule
-                    searchQuery={searchQuery}
-                    onSearchQueryChange={setSearchQuery}
-                    isSearching={isSearching}
-                    isTestingSignals={isTestingSignals}
-                    onPurgeSignals={purgeBadSignalsWrapper}
-                    currentStreamShards={currentStreamShards}
-                    suggestions={suggestions}
-                    onPlayStream={handlePlayStream}
-                    currentUrl={audioState.currentUrl}
-                    moduleRotation={moduleRotation}
-                    moduleCloudItems={moduleCloudItems}
-                    isDragging={isDragging}
-                    onDragStart={() => setIsDragging(true)}
-                    onDragEnd={() => setIsDragging(false)}
-                  />
-                )}
-
-                {activeModule === 'nodes' && (
-                  <NodesModule
-                    moduleRotation={moduleRotation}
-                    moduleCloudItems={moduleCloudItems}
-                    onNodeClick={handleNodeClick}
-                    isDragging={isDragging}
-                    onDragStart={() => setIsDragging(true)}
-                    onDragEnd={() => setIsDragging(false)}
-                  />
-                )}
-
-                {activeModule === 'themes' && (
-                  <ThemesModule
-                    currentThemeId={settings.themeId}
-                    moduleRotation={moduleRotation}
-                    moduleCloudItems={moduleCloudItems}
-                    onThemeSelect={handleThemeSelect}
-                    isDragging={isDragging}
-                    onDragStart={() => setIsDragging(true)}
-                    onDragEnd={() => setIsDragging(false)}
-                  />
-                )}
-
-                {activeModule === 'display' && (
-                  <DisplayModule
-                    displaySettings={settings.display!}
-                    onUpdate={updateDisplaySettings}
-                  />
-                )}
-
-                {activeModule === 'intel' && (
-                  <LogsModule systemLogs={systemLogs} />
-                )}
-
-                {activeModule === 'eq' && <EQModule />}
               </div>
             )}
           </div>

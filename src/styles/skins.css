@@ -1,0 +1,304 @@
+/**
+ * skins.css
+ * 
+ * Глобальные стили для системы скинов
+ * Использует CSS переменные для динамической темизации
+ */
+
+/* Базовые CSS переменные (перезаписываются скинами) */
+:root {
+  --color-primary: #6366f1;
+  --color-secondary: #8b5cf6;
+  --color-background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  --color-surface: rgba(255, 255, 255, 0.8);
+  --color-text: #1e293b;
+  --color-text-secondary: #64748b;
+  --color-accent: #6366f1;
+  --color-border: rgba(100, 116, 139, 0.2);
+  --color-shadow: rgba(0, 0, 0, 0.1);
+  --color-glow: #6366f1;
+  
+  --radius-sm: 12px;
+  --radius-md: 20px;
+  --radius-lg: 32px;
+  
+  --spacing-xs: 8px;
+  --spacing-sm: 16px;
+  --spacing-md: 24px;
+  --spacing-lg: 32px;
+  --spacing-xl: 48px;
+  
+  --font-xs: 11px;
+  --font-sm: 13px;
+  --font-base: 15px;
+  --font-lg: 18px;
+  --font-xl: 24px;
+  --font-xxl: 32px;
+  
+  --effect-blur: 40px;
+  --effect-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+  --effect-glow: none;
+  --effect-opacity: 0.95;
+  --animation-speed: 0.5s;
+}
+
+/* Универсальные классы с переменными */
+.skin-panel {
+  background-color: var(--color-surface);
+  color: var(--color-text);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border);
+  box-shadow: var(--effect-shadow);
+  backdrop-filter: blur(var(--effect-blur));
+  -webkit-backdrop-filter: blur(var(--effect-blur));
+  padding: var(--spacing-md);
+}
+
+.skin-card {
+  background-color: var(--color-surface);
+  color: var(--color-text);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  padding: var(--spacing-sm);
+  transition: all var(--animation-speed) ease;
+}
+
+.skin-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--effect-glow), var(--effect-shadow);
+}
+
+/* Вертикальные слайдеры для EdgeControls */
+input[type="range"].slider-vertical {
+  -webkit-appearance: slider-vertical;
+  appearance: slider-vertical;
+  width: 8px;
+  cursor: pointer;
+  background: linear-gradient(to top, 
+    rgba(99, 102, 241, 0.2), 
+    rgba(139, 92, 246, 0.2));
+  border-radius: 8px;
+  outline: none;
+  transition: all 0.3s ease;
+}
+
+input[type="range"].slider-vertical:hover {
+  background: linear-gradient(to top, 
+    rgba(99, 102, 241, 0.4), 
+    rgba(139, 92, 246, 0.4));
+}
+
+input[type="range"].slider-vertical::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  cursor: pointer;
+  box-shadow: 0 0 10px rgba(99, 102, 241, 0.5);
+  transition: all 0.3s ease;
+}
+
+input[type="range"].slider-vertical::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+  box-shadow: 0 0 20px rgba(99, 102, 241, 0.8);
+}
+
+input[type="range"].slider-vertical::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  cursor: pointer;
+  border: none;
+  box-shadow: 0 0 10px rgba(99, 102, 241, 0.5);
+  transition: all 0.3s ease;
+}
+
+input[type="range"].slider-vertical::-moz-range-thumb:hover {
+  transform: scale(1.2);
+  box-shadow: 0 0 20px rgba(99, 102, 241, 0.8);
+}
+
+.skin-button {
+  background-color: var(--color-accent);
+  color: #ffffff;
+  border: none;
+  border-radius: var(--radius-md);
+  padding: var(--spacing-sm) var(--spacing-md);
+  font-size: var(--font-base);
+  font-weight: 800;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all var(--animation-speed) ease;
+  box-shadow: var(--effect-shadow);
+}
+
+.skin-button:hover {
+  transform: scale(1.05);
+  box-shadow: var(--effect-glow), var(--effect-shadow);
+}
+
+.skin-input {
+  background-color: var(--color-surface);
+  color: var(--color-text);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-sm);
+  font-size: var(--font-base);
+  outline: none;
+  transition: all var(--animation-speed) ease;
+}
+
+.skin-input:focus {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px var(--color-accent)33;
+}
+
+.skin-text-primary {
+  color: var(--color-primary);
+}
+
+.skin-text-secondary {
+  color: var(--color-text-secondary);
+}
+
+.skin-text-accent {
+  color: var(--color-accent);
+}
+
+/* Эффект сканлайнов для ретро тем */
+.skin-effect-scanlines {
+  position: relative;
+}
+
+.skin-effect-scanlines::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 0, 0, 0.1) 2px,
+    rgba(0, 0, 0, 0.1) 4px
+  );
+  pointer-events: none;
+  z-index: 9999;
+}
+
+/* Эффект сетки для киберпанк тем */
+.skin-effect-grid {
+  background-image: 
+    linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+/* Неоновое свечение */
+.skin-effect-neon {
+  text-shadow: var(--effect-glow);
+  animation: neonPulse 2s ease-in-out infinite;
+}
+
+@keyframes neonPulse {
+  0%, 100% {
+    opacity: 1;
+    filter: brightness(1);
+  }
+  50% {
+    opacity: 0.9;
+    filter: brightness(1.2);
+  }
+}
+
+/* Плавающие частицы */
+@keyframes particleFloat {
+  0%, 100% {
+    transform: translateY(0) translateX(0);
+  }
+  50% {
+    transform: translateY(-20px) translateX(10px);
+  }
+}
+
+.skin-particle {
+  animation: particleFloat 6s ease-in-out infinite;
+}
+
+/* Стеклянный эффект */
+.skin-glass {
+  backdrop-filter: blur(var(--effect-blur));
+  -webkit-backdrop-filter: blur(var(--effect-blur));
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+}
+
+/* Адаптивные размеры панелей */
+.skin-panel-left {
+  width: var(--panel-width-left, 280px);
+}
+
+.skin-panel-right {
+  width: var(--panel-width-right, 320px);
+}
+
+/* Анимации появления модулей */
+.skin-module-fade {
+  animation: fadeIn var(--animation-speed) ease;
+}
+
+.skin-module-slide {
+  animation: slideIn var(--animation-speed) ease;
+}
+
+.skin-module-scale {
+  animation: scaleIn var(--animation-speed) ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  :root {
+    --spacing-md: 16px;
+    --spacing-lg: 24px;
+    --font-base: 14px;
+    --font-lg: 16px;
+  }
+  
+  .skin-panel-left,
+  .skin-panel-right {
+    width: 100%;
+  }
+}

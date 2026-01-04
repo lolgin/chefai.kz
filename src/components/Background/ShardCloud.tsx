@@ -13,13 +13,13 @@ import React from 'react';
 interface ShardCloudProps {
   rotation: { x: number; y: number };
   shards: Array<{
-    data: string;
+    data: any; // Может быть строка или объект (DiscoveredStream, Theme, Node, etc)
     x: number;
     y: number;
     z: number;
     size: number;
   }>;
-  onShardClick: (tag: string) => void;
+  onShardClick: (item: any) => void; // Передаём весь объект или строку
   isDragging: boolean;
   onDragStart: () => void;
   onDragEnd: () => void;
@@ -47,27 +47,34 @@ export const ShardCloud: React.FC<ShardCloudProps> = ({
           transform: `rotateX(${rotation.x}deg) rotateY(${rotation.y}deg)`
         }}
       >
-        {shards.map((shard, i) => (
-          <div
-            key={i}
-            className="shard-item pointer-events-auto"
-            style={{
-              transform: `translate3d(${shard.x}px, ${shard.y}px, ${shard.z}px) rotateY(${-rotation.y}deg) rotateX(${-rotation.x}deg)`
-            }}
-            onClick={() => onShardClick(shard.data)}
-          >
-            <span
-              className="font-black uppercase tracking-widest transition-all hover:scale-150 block"
+        {shards.map((shard, i) => {
+          // Извлекаем текст для отображения
+          const displayText = typeof shard.data === 'string' 
+            ? shard.data 
+            : (shard.data?.name || shard.data?.title || 'UNKNOWN');
+          
+          return (
+            <div
+              key={i}
+              className="shard-item pointer-events-auto"
               style={{
-                fontSize: `${shard.size}rem`,
-                color: i % 5 === 0 ? theme.accent : 'inherit',
-                opacity: 0.15 + (shard.z + 340) / 680
+                transform: `translate3d(${shard.x}px, ${shard.y}px, ${shard.z}px) rotateY(${-rotation.y}deg) rotateX(${-rotation.x}deg)`
               }}
+              onClick={() => onShardClick(shard.data)}
             >
-              {shard.data}
-            </span>
-          </div>
-        ))}
+              <span
+                className="font-black uppercase tracking-widest transition-all hover:scale-150 block"
+                style={{
+                  fontSize: `${shard.size}rem`,
+                  color: i % 5 === 0 ? theme.accent : 'inherit',
+                  opacity: 0.15 + (shard.z + 340) / 680
+                }}
+              >
+                {displayText}
+              </span>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
