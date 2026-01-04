@@ -145,6 +145,7 @@ export interface DisplaySettings {
   cloudLayout?: CloudLayout; // Тип раскладки облака
   cloudSettings?: CloudSettings; // Настройки облака тегов
   visualizationProvider?: string; // Провайдер визуализации (из VisualizationProvider enum)
+  visualizationEnabled?: boolean; // Включена ли визуализация (по умолчанию true)
 }
 
 export interface ModuleCustomization {

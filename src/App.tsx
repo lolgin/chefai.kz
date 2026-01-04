@@ -26,7 +26,7 @@
  */
 
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
-import { Cpu, List, Globe, Database, Palette, Diamond, X, Search, Activity, Radio, Monitor, Type, Maximize, Sparkles, Layers } from 'lucide-react';
+import { Cpu, List, Globe, Database, Palette, Diamond, X, Search, Activity, Radio, Monitor, Type, Maximize, Sparkles, Layers, Eye, Orbit } from 'lucide-react';
 
 // Контексты
 import { AudioProvider } from './contexts/AudioContext';
@@ -59,6 +59,7 @@ import { audioEngine } from './services/audioEngine';
 import { PROVIDERS, GENRES_BY_PROVIDER, GENRE_STREAMS, THEMES } from './constants';
 import { Provider, CloudLayout, CustomNode } from './types';
 import { DiscoveredStream } from './services/streamDiscovery';
+import { getAllVisualizationProviders, VisualizationProvider } from './services/visualizationProviders';
 
 // Основной компонент приложения с контекстами
 const AppContent: React.FC = () => {
@@ -665,6 +666,40 @@ const AppContent: React.FC = () => {
           
           {/* Quick Display Settings */}
           <div className="flex items-center gap-2 opacity-30 hover:opacity-100 transition-opacity">
+            {/* Visualization Provider Selector */}
+            <button
+              onClick={() => {
+                const providers = getAllVisualizationProviders();
+                const current = settings.displaySettings?.visualizationProvider || VisualizationProvider.THREEJS_PLANETS;
+                const currentIndex = providers.findIndex(p => p.id === current);
+                const next = providers[(currentIndex + 1) % providers.length];
+                updateDisplaySettings({ visualizationProvider: next.id });
+                addLog(`Viz: ${next.name}`, 'info');
+              }}
+              className="p-2 rounded-lg hover:bg-white/10 transition-all"
+              style={{ color: theme.accent }}
+              title={`Visualization: ${getAllVisualizationProviders().find(p => p.id === (settings.displaySettings?.visualizationProvider || VisualizationProvider.THREEJS_PLANETS))?.name || 'Planets'}`}
+            >
+              <Orbit size={16} />
+            </button>
+            
+            {/* Enable/Disable Visualization */}
+            <button
+              onClick={() => {
+                const enabled = settings.displaySettings?.visualizationEnabled ?? true;
+                updateDisplaySettings({ visualizationEnabled: !enabled });
+                addLog(enabled ? 'Viz: OFF' : 'Viz: ON', 'info');
+              }}
+              className="p-2 rounded-lg hover:bg-white/10 transition-all"
+              style={{ 
+                color: theme.text,
+                opacity: (settings.displaySettings?.visualizationEnabled ?? true) ? 1 : 0.2
+              }}
+              title="Toggle Visualization"
+            >
+              <Eye size={16} />
+            </button>
+            
             {/* Font Size */}
             <button
               onClick={() => {
@@ -706,19 +741,6 @@ const AppContent: React.FC = () => {
               title="Glass Effect"
             >
               <Sparkles size={16} />
-            </button>
-            
-            {/* Compact Mode */}
-            <button
-              onClick={() => updateDisplaySettings({ compactMode: !settings.displaySettings?.compactMode })}
-              className="p-2 rounded-lg hover:bg-white/10 transition-all"
-              style={{ 
-                color: theme.text,
-                opacity: settings.displaySettings?.compactMode ? 1 : 0.3
-              }}
-              title="Compact Mode"
-            >
-              <Layers size={16} />
             </button>
           </div>
 
