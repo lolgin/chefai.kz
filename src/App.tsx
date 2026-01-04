@@ -52,7 +52,6 @@ import { ShardCloudThreeJS } from './components/Background/ShardCloudThreeJS';
 import { DiscoveryModule } from './components/Modules/DiscoveryModule';
 import { NodesModule } from './components/Modules/NodesModule';
 import { ThemesModule } from './components/Modules/ThemesModule';
-import { DisplayModule } from './components/Modules/DisplayModule';
 
 // Сервисы и константы
 import { audioEngine } from './services/audioEngine';
@@ -270,16 +269,6 @@ const AppContent: React.FC = () => {
         return generateCloud(nodeList.slice(0, 45), 280);
       case 'themes':
         return generateCloud(THEMES, 240);
-      case 'display':
-        const vizProviders = [
-          { id: 'threejs-planets', name: 'Cosmic Planets' },
-          { id: 'threejs-galaxy', name: 'Spiral Galaxy' },
-          { id: 'threejs-nebula', name: 'Nebula Cloud' },
-          { id: 'css3d-cloud', name: 'Classic Cloud' },
-          { id: 'css3d-helix', name: 'DNA Helix' },
-          { id: 'd3-force', name: 'Force Graph' }
-        ];
-        return generateCloud(vizProviders, 240);
       case 'intel':
         const intelPool = ['LATENCY: 42ms', 'NODES: 12', 'UPTIME: 100%', 'ENCRYPTION: AES-256', 'SIGNAL: STABLE', ...systemLogs.map(l => l.msg)];
         return generateCloud(intelPool, 260);
@@ -327,8 +316,7 @@ const AppContent: React.FC = () => {
   const modules = [
     { id: 'discovery' as ModuleType, icon: <Globe size={20} />, label: 'SCAN' },
     { id: 'nodes' as ModuleType, icon: <Database size={20} />, label: 'NODES' },
-    { id: 'themes' as ModuleType, icon: <Palette size={20} />, label: 'THEME' },
-    { id: 'display' as ModuleType, icon: <Monitor size={20} />, label: 'DISPLAY' }
+    { id: 'themes' as ModuleType, icon: <Palette size={20} />, label: 'THEME' }
   ];
 
   // Обработчики для Left Panel

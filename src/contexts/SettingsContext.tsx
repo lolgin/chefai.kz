@@ -51,6 +51,7 @@ const DEFAULT_SETTINGS: AppSettings = {
     use3DCosmicView: true, // Новая опция для переключения между CSS 3D и Three.js
     spacing: 'normal',
     visualizationProvider: undefined, // Провайдер визуализации отключен по умолчанию
+    visualizationEnabled: true, // Визуализация включена по умолчанию
     cloudSettings: {
       viewMode: 'cloud',
       cloudScale: 1.0,
