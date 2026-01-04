@@ -9,11 +9,8 @@
  * - Вращение мышью
  */
 
-import React, { useRef, useEffect, useMemo } from 'react';
+import React, { useRef, useEffect } from 'react';
 import * as THREE from 'three';
-import { useVisualizationProvider } from '../../hooks/useVisualizationProvider';
-import { VisualizationProvider } from '../../services/visualizationProviders';
-import { useSettings } from '../../contexts/SettingsContext';
 
 interface ShardCloudThreeJSProps {
   rotation: { x: number; y: number };
@@ -37,27 +34,8 @@ export const ShardCloudThreeJS: React.FC<ShardCloudThreeJSProps> = ({
   onShardClick,
   theme
 }) => {
-  const { settings } = useSettings();
-  
-  // Проверяем включен ли провайдер визуализации
-  const visualizationEnabled = settings.display?.visualizationEnabled !== false;
-  const currentProvider = (settings.display?.visualizationProvider as VisualizationProvider) || VisualizationProvider.THREEJS_PLANETS;
-  
-  // Мемоизируем items чтобы избежать пересоздания при каждом рендере
-  const items = useMemo(() => {
-    return shards.map(s => ({
-      id: typeof s.data === 'object' && s.data?.name ? s.data.name : String(s.data),
-      name: typeof s.data === 'object' && s.data?.name ? s.data.name : String(s.data),
-      ...s.data
-    }));
-  }, [shards]);
-  
-  // Используем провайдер только если визуализация включена
-  const { layout: providedLayout } = useVisualizationProvider({
-    providerId: currentProvider,
-    items: visualizationEnabled ? items : [], // Пустой массив когда выключено
-    config: {}
-  });
+  // Визуализация провайдеров больше не используется
+  // Все позиции приходят через shards prop (кешированные в App.tsx)
   
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const sceneRef = useRef<THREE.Scene | null>(null);
@@ -165,21 +143,12 @@ export const ShardCloudThreeJS: React.FC<ShardCloudThreeJSProps> = ({
     shards.forEach((shard, index) => {
       const itemId = typeof shard.data === 'object' && shard.data?.name ? shard.data.name : String(shard.data);
       
-      // КЛЮЧЕВОЕ ИЗМЕНЕНИЕ: используем позиции из провайдера ТОЛЬКО если визуализация включена
-      let x, y, z, scale;
-      if (visualizationEnabled) {
-        const position = providedLayout.get(itemId);
-        x = position?.x ?? shard.x;
-        y = position?.y ?? shard.y;
-        z = position?.z ?? shard.z;
-        scale = position?.scale ?? 1.0;
-      } else {
-        // Когда провайдер выключен - используем ТОЛЬКО дефолтные позиции из shards (стабильные из кеша)
-        x = shard.x;
-        y = shard.y;
-        z = shard.z;
-        scale = 1.0;
-      }
+      // ВСЕГДА используем КЕШИРОВАННЫЕ позиции из shard (из App.tsx generateCloud)
+      // Это гарантирует стабильность позиций - как в CSS режиме
+      const x = shard.x;
+      const y = shard.y;
+      const z = shard.z;
+      const scale = 1.0;
       
       const radius = shard.size * 15 * scale; // Размер планеты с учетом scale
       const geometry = new THREE.SphereGeometry(radius, 32, 32);
@@ -199,25 +168,11 @@ export const ShardCloudThreeJS: React.FC<ShardCloudThreeJSProps> = ({
       const mesh = new THREE.Mesh(geometry, material);
       mesh.position.set(x, y, z);
       
-      // Применяем rotation из провайдера если есть И визуализация включена
-      if (visualizationEnabled) {
-        const position = providedLayout.get(itemId);
-        if (position?.rotation) {
-          mesh.rotation.set(position.rotation.x, position.rotation.y, position.rotation.z);
-        }
-      }
-      
       // Сохраняем данные
       objectsRef.current.set(mesh, shard.data);
       scene.add(mesh);
     });
-  }, [
-    shards, 
-    visualizationEnabled,
-    // КРИТИЧЕСКИ ВАЖНО: providedLayout НЕ должен быть в dependencies когда visualization выключена!
-    // Это предотвращает перерендер при каждом изменении items
-    ...(visualizationEnabled ? [providedLayout] : [])
-  ]);
+  }, [shards]); // ТОЛЬКО shards - стабильный массив с кешированными позициями
 
   // Применяем вращение
   useEffect(() => {
