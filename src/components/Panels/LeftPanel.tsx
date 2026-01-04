@@ -108,36 +108,36 @@ export const LeftPanel: React.FC<LeftPanelProps> = ({
   return (
     <div
       className="hidden lg:flex transition-all duration-500 border-r bg-black/5 flex-col overflow-hidden"
-      style={{ borderColor: `${theme.text}11`, width: isOpen ? '380px' : '0' }}
+      style={{ borderColor: `${theme.text}11`, width: isOpen ? '480px' : '0' }}
     >
-      <div className="p-8 w-[380px] h-full overflow-y-auto no-scrollbar space-y-8">
-        <h3 className="text-[14px] font-black uppercase tracking-widest flex items-center gap-3"
+      <div className="p-10 w-[480px] h-full overflow-y-auto no-scrollbar space-y-10">
+        <h3 className="text-[24px] font-black uppercase tracking-widest flex items-center gap-5"
             style={{ color: theme.text }}>
-          <Hexagon size={18} /> NEURAL_CORE
+          <Hexagon size={32} /> NEURAL_CORE
         </h3>
         
         {/* Dropdown для выбора движка рендеринга */}
         <div className="relative">
           <button
             onClick={() => setIsEngineDropdownOpen(!isEngineDropdownOpen)}
-            className="w-full flex items-center justify-between px-4 py-3 rounded-lg bg-black/20 hover:bg-black/30 transition-all border"
+            className="w-full flex items-center justify-between px-6 py-5 rounded-xl bg-black/20 hover:bg-black/30 transition-all border-2"
             style={{ borderColor: `${theme.text}22`, color: theme.text }}
           >
-            <div className="flex items-center gap-3">
-              <span className="text-2xl">
+            <div className="flex items-center gap-5">
+              <span className="text-5xl">
                 {RENDER_ENGINES.find(e => e.id === currentEngine)?.icon || '🎨'}
               </span>
               <div className="text-left">
-                <div className="text-[13px] font-black uppercase tracking-wider">
+                <div className="text-[22px] font-black uppercase tracking-wider">
                   {RENDER_ENGINES.find(e => e.id === currentEngine)?.name || 'Three.js'}
                 </div>
-                <div className="text-[10px] opacity-50">
+                <div className="text-[16px] opacity-50">
                   {RENDER_ENGINES.find(e => e.id === currentEngine)?.performance || 'medium'}
                 </div>
               </div>
             </div>
             <ChevronDown 
-              size={18} 
+              size={32} 
               className="transition-transform"
               style={{ transform: isEngineDropdownOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}
             />
@@ -163,38 +163,38 @@ export const LeftPanel: React.FC<LeftPanelProps> = ({
                       }
                     }}
                     disabled={!isAvailable}
-                    className="w-full px-4 py-3 flex items-start gap-3 hover:bg-white/10 transition-all text-left"
+                    className="w-full px-6 py-5 flex items-start gap-5 hover:bg-white/10 transition-all text-left rounded-lg"
                     style={{
                       backgroundColor: isActive ? `${theme.text}15` : 'transparent',
                       opacity: isAvailable ? 1 : 0.3,
                       cursor: isAvailable ? 'pointer' : 'not-allowed'
                     }}
                   >
-                    <span className="text-2xl mt-0.5">{engine.icon}</span>
+                    <span className="text-4xl mt-1">{engine.icon}</span>
                     <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <span className="text-[16px] font-black uppercase tracking-wider" style={{ color: theme.text }}>
+                      <div className="flex items-center gap-3">
+                        <span className="text-[22px] font-black uppercase tracking-wider" style={{ color: theme.text }}>
                           {engine.name}
                         </span>
                         {!isAvailable && (
-                          <span className="text-[7px] px-1.5 py-0.5 rounded bg-yellow-500/20 text-yellow-400">
+                          <span className="text-[14px] px-3 py-1.5 rounded-lg bg-yellow-500/20 text-yellow-400 font-bold">
                             SOON
                           </span>
                         )}
                         {isActive && (
-                          <span className="text-[7px] px-1.5 py-0.5 rounded" style={{ backgroundColor: theme.text + '20', color: theme.text }}>
+                          <span className="text-[14px] px-3 py-1.5 rounded-lg font-bold" style={{ backgroundColor: theme.text + '20', color: theme.text }}>
                             ACTIVE
                           </span>
                         )}
                       </div>
-                      <div className="text-[11px] opacity-60 mt-1" style={{ color: theme.text }}>
+                      <div className="text-[16px] opacity-60 mt-2" style={{ color: theme.text }}>
                         {engine.description}
                       </div>
-                      <div className="flex flex-wrap gap-1.5 mt-2">
+                      <div className="flex flex-wrap gap-2 mt-3">
                         {engine.features.slice(0, 3).map((feat, i) => (
                           <span 
                             key={i} 
-                            className="text-[9px] px-2 py-1 rounded"
+                            className="text-[13px] px-3 py-1.5 rounded"
                             style={{ backgroundColor: `${theme.text}10`, color: theme.text }}
                           >
                             {feat}
@@ -215,8 +215,8 @@ export const LeftPanel: React.FC<LeftPanelProps> = ({
             : genresByProvider[p.id] || [];
           
           return (
-            <div key={p.id} className="space-y-2">
-              <div className="text-[10px] font-black uppercase opacity-30 mb-2 px-4 tracking-wider">
+            <div key={p.id} className="space-y-3">
+              <div className="text-[18px] font-black uppercase opacity-40 mb-3 px-6 tracking-wider">
                 {p.name}
               </div>
               
@@ -230,13 +230,13 @@ export const LeftPanel: React.FC<LeftPanelProps> = ({
                 
                 if (isEditing) {
                   return (
-                    <div key={name} className="space-y-1 p-2 rounded-lg bg-black/20">
+                    <div key={name} className="space-y-3 p-4 rounded-xl bg-black/20">
                       <input
                         type="text"
                         value={editName}
                         onChange={e => setEditName(e.target.value)}
                         placeholder="Название"
-                        className="w-full px-2 py-1 text-[9px] font-bold uppercase rounded bg-black/30 border border-white/10"
+                        className="w-full px-4 py-3 text-[16px] font-bold uppercase rounded-lg bg-black/30 border-2 border-white/10"
                         style={{ color: theme.text }}
                       />
                       <input
@@ -244,23 +244,23 @@ export const LeftPanel: React.FC<LeftPanelProps> = ({
                         value={editUrl}
                         onChange={e => setEditUrl(e.target.value)}
                         placeholder="URL"
-                        className="w-full px-2 py-1 text-[8px] rounded bg-black/30 border border-white/10"
+                        className="w-full px-4 py-3 text-[14px] rounded-lg bg-black/30 border-2 border-white/10"
                         style={{ color: theme.text }}
                       />
-                      <div className="flex gap-1">
+                      <div className="flex gap-2">
                         <button
                           onClick={handleSaveEdit}
-                          className="flex-1 px-2 py-1 rounded bg-green-500/20 hover:bg-green-500/30 transition-all flex items-center justify-center"
+                          className="flex-1 px-4 py-3 rounded-lg bg-green-500/20 hover:bg-green-500/30 transition-all flex items-center justify-center"
                           style={{ color: theme.text }}
                         >
-                          <Check size={12} />
+                          <Check size={24} />
                         </button>
                         <button
                           onClick={handleCancelEdit}
-                          className="flex-1 px-2 py-1 rounded bg-red-500/20 hover:bg-red-500/30 transition-all flex items-center justify-center"
+                          className="flex-1 px-4 py-3 rounded-lg bg-red-500/20 hover:bg-red-500/30 transition-all flex items-center justify-center"
                           style={{ color: theme.text }}
                         >
-                          <X size={12} />
+                          <X size={24} />
                         </button>
                       </div>
                     </div>
@@ -269,14 +269,14 @@ export const LeftPanel: React.FC<LeftPanelProps> = ({
                 
                 return (
                   <div key={name} className="relative">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-3">
                       <button
                         onClick={() => url && onGenreClick(url, name, p.id as Provider, true)}
                         onMouseDown={() => isCustom && node && handleLongPressStart(node)}
                         onMouseUp={handleLongPressEnd}
                         onTouchStart={() => isCustom && node && handleLongPressStart(node)}
                         onTouchEnd={handleLongPressEnd}
-                        className="flex-1 text-left px-4 py-2.5 rounded-lg text-[12px] font-black uppercase transition-all shadow-md"
+                        className="flex-1 text-left px-6 py-4 rounded-xl text-[18px] font-black uppercase transition-all shadow-lg"
                         style={{
                           backgroundColor: currentGenre === name ? theme.accent : 'transparent',
                           color: currentGenre === name ? (theme.isLight ? '#000' : '#fff') : theme.text,
@@ -296,7 +296,7 @@ export const LeftPanel: React.FC<LeftPanelProps> = ({
                             e.stopPropagation();
                             setContextMenuNode(hasContextMenu ? null : node);
                           }}
-                          className="p-2 rounded-md hover:bg-white/20 active:bg-white/30 transition-all shrink-0"
+                          className="p-3 rounded-lg hover:bg-white/20 active:bg-white/30 transition-all shrink-0"
                           style={{ 
                             color: theme.text, 
                             opacity: hasContextMenu ? 1 : 0.6,
@@ -304,7 +304,7 @@ export const LeftPanel: React.FC<LeftPanelProps> = ({
                           }}
                           title="Меню управления"
                         >
-                          <MoreVertical size={20} />
+                          <MoreVertical size={32} />
                         </button>
                       )}
                     </div>
