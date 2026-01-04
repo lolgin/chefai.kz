@@ -13,6 +13,9 @@ import React from 'react';
 import { Paintbrush, Type, Sparkles, Layers, Zap, Maximize, Cloud, Link, Grid3x3, List, Globe } from 'lucide-react';
 import { DisplaySettings, CloudSettings } from '../../types';
 import { Button } from '../UI/Button';
+import { VisualizationSelector } from '../UI/VisualizationSelector';
+import { VisualizationProvider } from '../../services/visualizationProviders';
+import { useSettings } from '../../contexts/SettingsContext';
 
 interface DisplayModuleProps {
   displaySettings: DisplaySettings;
@@ -54,9 +57,30 @@ export const DisplayModule: React.FC<DisplayModuleProps> = ({
       cloudSettings: { ...cloudSettings, ...updates }
     });
   };
+  
+  const { theme } = useSettings();
+  
+  // Текущий провайдер визуализации из настроек или по умолчанию
+  const currentProvider = displaySettings.visualizationProvider || VisualizationProvider.THREEJS_PLANETS;
+  
+  const handleProviderChange = (provider: VisualizationProvider) => {
+    onUpdate({ visualizationProvider: provider });
+  };
 
   return (
     <div className="space-y-8 p-8">
+      {/* НОВАЯ СЕКЦИЯ: Выбор типа визуализации */}
+      <div className="space-y-4 p-6 rounded-xl" style={{
+        backgroundColor: theme.surface,
+        border: `1px solid ${theme.text}22`
+      }}>
+        <VisualizationSelector
+          currentProvider={currentProvider}
+          onProviderChange={handleProviderChange}
+          theme={theme}
+        />
+      </div>
+      
       {/* Размер шрифта */}
       <div className="space-y-4">
         <div className="flex items-center gap-3">

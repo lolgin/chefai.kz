@@ -4,6 +4,34 @@ src/constants.tsx
 ## Project Overview
 **AuraWave** (chefai.kz) is a modular web radio player with 3D visualization, AI metadata generation, and global station discovery. Recently refactored from a 509-line monolith into 29 modular files for better maintainability and AI-assisted development.
 
+## Visualization System (NEW v2.0)
+
+### Modular Provider Architecture
+Система визуализации теперь полностью модульная через **Provider Pattern**:
+
+**Core Files:**
+- [src/services/visualizationProviders.ts](src/services/visualizationProviders.ts) - Registry всех провайдеров
+- [src/hooks/useVisualizationProvider.ts](src/hooks/useVisualizationProvider.ts) - Хук для компонентов
+- [src/components/UI/VisualizationSelector.tsx](src/components/UI/VisualizationSelector.tsx) - UI селектор
+
+**Provider Types:**
+- `threejs` - WebGL 3D визуализации (планеты, галактики, туманности)
+- `css3d` - CSS 3D transforms (облака тегов, сферы)
+- `d3` - D3.js графы (force-directed, деревья)
+- `2d` - Простые layouts (grid, masonry, carousel)
+
+**Adding New Visualization:**
+1. Add enum ID to `VisualizationProvider`
+2. Create class implementing `IVisualizationProvider`
+3. Implement `calculateLayout()` with position algorithm
+4. Register in `VisualizationRegistry` constructor
+5. Add icon to `PROVIDER_ICONS` in VisualizationSelector
+
+**Quick Reference:** See [AI_AGENT_QUICK_REF.md](AI_AGENT_QUICK_REF.md) for 5-min guide  
+**Full Guide:** See [ADDING_VISUALIZATIONS.md](ADDING_VISUALIZATIONS.md) for complete docs
+
+**Pattern**: Layout algorithm decoupled from rendering - провайдер возвращает Map<id, {x,y,z}>, компонент занимается рендером.
+
 ## Architecture Philosophy
 
 ### Context-Driven State Management

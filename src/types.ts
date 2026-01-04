@@ -144,6 +144,7 @@ export interface DisplaySettings {
   use3DCosmicView?: boolean; // Переключение между CSS 3D и Three.js
   cloudLayout?: CloudLayout; // Тип раскладки облака
   cloudSettings?: CloudSettings; // Настройки облака тегов
+  visualizationProvider?: string; // Провайдер визуализации (из VisualizationProvider enum)
 }
 
 export interface ModuleCustomization {
