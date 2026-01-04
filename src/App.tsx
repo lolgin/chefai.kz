@@ -26,7 +26,7 @@
  */
 
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
-import { Cpu, List, Globe, Database, Palette, Diamond, X, Search, Activity, Radio } from 'lucide-react';
+import { Cpu, List, Globe, Database, Palette, Diamond, X, Search, Activity, Radio, Monitor } from 'lucide-react';
 
 // Контексты
 import { AudioProvider } from './contexts/AudioContext';
@@ -52,6 +52,7 @@ import { ShardCloudThreeJS } from './components/Background/ShardCloudThreeJS';
 import { DiscoveryModule } from './components/Modules/DiscoveryModule';
 import { NodesModule } from './components/Modules/NodesModule';
 import { ThemesModule } from './components/Modules/ThemesModule';
+import { DisplayModule } from './components/Modules/DisplayModule';
 
 // Сервисы и константы
 import { audioEngine } from './services/audioEngine';
@@ -304,7 +305,8 @@ const AppContent: React.FC = () => {
   const modules = [
     { id: 'discovery' as ModuleType, icon: <Globe size={20} />, label: 'SCAN' },
     { id: 'nodes' as ModuleType, icon: <Database size={20} />, label: 'NODES' },
-    { id: 'themes' as ModuleType, icon: <Palette size={20} />, label: 'THEME' }
+    { id: 'themes' as ModuleType, icon: <Palette size={20} />, label: 'THEME' },
+    { id: 'display' as ModuleType, icon: <Monitor size={20} />, label: 'DISPLAY' }
   ];
 
   // Обработчики для Left Panel
@@ -595,6 +597,28 @@ const AppContent: React.FC = () => {
                     onChange={e => setSearchQuery(e.target.value)}
                     placeholder="FREQUENCY_EXPLORATION..."
                     className="bg-transparent flex-1 text-xl font-black uppercase outline-none text-white placeholder:text-white/20"
+                  />
+                </div>
+              </div>
+            )}
+            
+            {/* Модули - рендерятся как оверлеи */}
+            {activeModule === 'display' && (
+              <div className="absolute inset-0 flex items-center justify-center z-50 pointer-events-none">
+                <div className="pointer-events-auto w-full max-w-4xl max-h-[80vh] overflow-y-auto bg-black/90 backdrop-blur-2xl rounded-3xl border-2 shadow-2xl"
+                     style={{ borderColor: `${theme.accent}40` }}>
+                  <DisplayModule
+                    displaySettings={settings.displaySettings || {
+                      fontSize: 'lg',
+                      iconSize: 'lg',
+                      compactMode: false,
+                      glassEffect: true,
+                      randomColors: false,
+                      animationSpeed: 'normal',
+                      borderStyle: 'gradient',
+                      spacing: 'normal'
+                    }}
+                    onUpdate={(updates) => updateDisplaySettings(updates)}
                   />
                 </div>
               </div>
