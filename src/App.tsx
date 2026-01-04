@@ -256,7 +256,7 @@ const AppContent: React.FC = () => {
     // Создаем хеш текущего состояния
     const customNodesHash = settings.customNodes.map(n => `${n.url}|${n.name}`).join('::');
     const providersHash = PROVIDERS.map(p => p.id).join('::');
-    const genresHash = PROVIDERS.flatMap(p => (GENRES_BY_PROVIDER[p.id as Provider] || []).map(g => typeof g === 'string' ? g : g.name)).join('::');
+    const genresHash = PROVIDERS.flatMap(p => (GENRES_BY_PROVIDER[p.id as Provider] || []).map((g: any) => typeof g === 'string' ? g : g.name)).join('::');
     const currentHash = `${customNodesHash}||${providersHash}||${genresHash}`;
     
     // Если хеш не изменился - возвращаем закешированный массив
