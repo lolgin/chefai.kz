@@ -52,10 +52,12 @@ import { ShardCloudThreeJS } from './components/Background/ShardCloudThreeJS';
 import { DiscoveryModule } from './components/Modules/DiscoveryModule';
 import { NodesModule } from './components/Modules/NodesModule';
 import { ThemesModule } from './components/Modules/ThemesModule';
+import { ModelsModule } from './components/Modules/ModelsModule';
 
 // Сервисы и константы
 import { audioEngine } from './services/audioEngine';
 import { PROVIDERS, GENRES_BY_PROVIDER, GENRE_STREAMS, THEMES } from './constants';
+import { BUILT_IN_MODELS } from './constants/models';
 import { Provider, CloudLayout, CustomNode } from './types';
 import { DiscoveredStream } from './services/streamDiscovery';
 import { getAllVisualizationProviders, VisualizationProvider } from './services/visualizationProviders';
@@ -243,6 +245,10 @@ const AppContent: React.FC = () => {
     settings.customNodes.map(n => n.url).join(',')
   ]);
 
+  const modelsItems = useMemo(() => {
+    return BUILT_IN_MODELS;
+  }, []); // Константа, не зависит от изменений
+
   // Фоновое облако - переключается в зависимости от активного модуля
   const mainCloudShards = useMemo(() => {
     // Если активен модуль - показываем его облако с ПОЛНЫМИ ОБЪЕКТАМИ
@@ -253,6 +259,8 @@ const AppContent: React.FC = () => {
     } else if (activeModule === 'themes') {
       // THEMES - константа, не требует мемоизации
       return generateCloud(THEMES, 340);
+    } else if (activeModule === 'models') {
+      return generateCloud(modelsItems, 340);
     }
     
     // Дефолтное облако когда модуль не активен - чистый запуск (пустое)
@@ -268,6 +276,8 @@ const AppContent: React.FC = () => {
         return generateCloud(nodesItems, 280);
       case 'themes':
         return generateCloud(THEMES, 240);
+      case 'models':
+        return generateCloud(modelsItems, 280);
       case 'intel':
         const intelPool = ['LATENCY: 42ms', 'NODES: 12', 'UPTIME: 100%', 'ENCRYPTION: AES-256', 'SIGNAL: STABLE', ...systemLogs.map(l => l.msg)];
         return generateCloud(intelPool, 260);
@@ -315,7 +325,8 @@ const AppContent: React.FC = () => {
   const modules = [
     { id: 'discovery' as ModuleType, icon: <Globe size={20} />, label: 'SCAN' },
     { id: 'nodes' as ModuleType, icon: <Database size={20} />, label: 'NODES' },
-    { id: 'themes' as ModuleType, icon: <Palette size={20} />, label: 'THEME' }
+    { id: 'themes' as ModuleType, icon: <Palette size={20} />, label: 'THEME' },
+    { id: 'models' as ModuleType, icon: <Layers size={20} />, label: 'MODELS' }
   ];
 
   // Обработчики для Left Panel
@@ -488,6 +499,13 @@ const AppContent: React.FC = () => {
                     } else {
                       console.log('❌ Theme object invalid:', item);
                     }
+                  } else if (activeModule === 'models') {
+                    // item - это объект Model3D {id, name, url, category...}
+                    if (typeof item === 'object' && item.id) {
+                      console.log('✅ Applying 3D model:', item.id);
+                      updateDisplaySettings({ tagModel: item.id });
+                      addLog(`Model: ${item.name}`, 'info');
+                    }
                   } else if (activeModule === 'nodes') {
                     // item может быть: customNode {name, url, provider}, provider {id, name}, genre {name, url} или строка
                     if (typeof item === 'object') {
@@ -545,6 +563,12 @@ const AppContent: React.FC = () => {
                     // item - это объект Theme {id, name, colors, layout...}
                   if (typeof item === 'object' && item.id) {
                     updateSettings({ themeId: item.id });
+                  }
+                } else if (activeModule === 'models') {
+                  // item - это объект Model3D {id, name, url, category...}
+                  if (typeof item === 'object' && item.id) {
+                    updateDisplaySettings({ tagModel: item.id });
+                    addLog(`Model: ${item.name}`, 'info');
                   }
                 } else if (activeModule === 'display') {
                   // item - это провайдер визуализации {id, name}

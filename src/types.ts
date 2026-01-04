@@ -146,6 +146,7 @@ export interface DisplaySettings {
   cloudSettings?: CloudSettings; // Настройки облака тегов
   visualizationProvider?: string; // Провайдер визуализации (из VisualizationProvider enum)
   visualizationEnabled?: boolean; // Включена ли визуализация (по умолчанию true)
+  tagModel?: string; // ID 3D модели для тегов (из models.ts)
 }
 
 export interface ModuleCustomization {
