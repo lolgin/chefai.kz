@@ -71,6 +71,11 @@ export const ShardCloudThreeJS: React.FC<ShardCloudThreeJSProps> = ({
   const isRightDraggingRef = useRef(false);
   const lastMousePosRef = useRef({ x: 0, y: 0 });
   const currentRotationRef = useRef({ x: 0, y: 0 });
+  
+  // Для перетаскивания планет
+  const draggedMeshRef = useRef<THREE.Mesh | null>(null);
+  const dragStartPosRef = useRef<THREE.Vector3 | null>(null);
+  const dragPlaneRef = useRef<THREE.Plane | null>(null);
 
   // Инициализация Three.js
   useEffect(() => {
@@ -231,12 +236,33 @@ export const ShardCloudThreeJS: React.FC<ShardCloudThreeJSProps> = ({
     const camera = cameraRef.current;
     if (!canvas || !scene || !camera) return;
 
-    // Левая кнопка - клики на объекты
+    // Левая кнопка - клики на объекты или перетаскивание планет
     const handleMouseDown = (event: MouseEvent) => {
       if (event.button === 0) { // Левая кнопка
         isDraggingRef.current = false;
         mouseDownPosRef.current = { x: event.clientX, y: event.clientY };
-      } else if (event.button === 2) { // Правая кнопка
+        
+        // Проверяем попадание в планету
+        const rect = canvas.getBoundingClientRect();
+        mouseRef.current.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+        mouseRef.current.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+        
+        raycasterRef.current.setFromCamera(mouseRef.current, camera);
+        const intersects = raycasterRef.current.intersectObjects(Array.from(objectsRef.current.keys()));
+        
+        if (intersects.length > 0) {
+          // Начинаем drag планеты
+          const mesh = intersects[0].object as THREE.Mesh;
+          draggedMeshRef.current = mesh;
+          dragStartPosRef.current = mesh.position.clone();
+          
+          // Создаем плоскость для drag'a (параллельную камере)
+          const normal = new THREE.Vector3(0, 0, 1);
+          normal.applyQuaternion(camera.quaternion);
+          dragPlaneRef.current = new THREE.Plane(normal, 0);
+          dragPlaneRef.current.setFromNormalAndCoplanarPoint(normal, mesh.position);
+        }
+      } else if (event.button === 2) { // Правая кнопка - вращение облака
         event.preventDefault();
         isRightDraggingRef.current = true;
         lastMousePosRef.current = { x: event.clientX, y: event.clientY };
@@ -244,16 +270,32 @@ export const ShardCloudThreeJS: React.FC<ShardCloudThreeJSProps> = ({
     };
 
     const handleMouseMove = (event: MouseEvent) => {
-      // Для левой кнопки - проверка на драг
-      if (event.buttons === 1) {
+      // Перетаскивание планеты левой кнопкой
+      if (event.buttons === 1 && draggedMeshRef.current && dragPlaneRef.current) {
         const dx = Math.abs(event.clientX - mouseDownPosRef.current.x);
         const dy = Math.abs(event.clientY - mouseDownPosRef.current.y);
+        
         if (dx > 5 || dy > 5) {
           isDraggingRef.current = true;
+          
+          // Raycast на плоскость drag'a
+          const rect = canvas.getBoundingClientRect();
+          mouseRef.current.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+          mouseRef.current.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+          
+          raycasterRef.current.setFromCamera(mouseRef.current, camera);
+          
+          const intersection = new THREE.Vector3();
+          raycasterRef.current.ray.intersectPlane(dragPlaneRef.current, intersection);
+          
+          if (intersection) {
+            // Обновляем позицию планеты
+            draggedMeshRef.current.position.copy(intersection);
+          }
         }
       }
 
-      // Для правой кнопки - вращение
+      // Вращение облака правой кнопкой
       if (isRightDraggingRef.current && event.buttons === 2) {
         const deltaX = event.clientX - lastMousePosRef.current.x;
         const deltaY = event.clientY - lastMousePosRef.current.y;
@@ -269,7 +311,12 @@ export const ShardCloudThreeJS: React.FC<ShardCloudThreeJSProps> = ({
     };
 
     const handleMouseUp = (event: MouseEvent) => {
-      if (event.button === 2) {
+      if (event.button === 0) {
+        // Сбрасываем drag планеты
+        draggedMeshRef.current = null;
+        dragStartPosRef.current = null;
+        dragPlaneRef.current = null;
+      } else if (event.button === 2) {
         isRightDraggingRef.current = false;
       }
     };
