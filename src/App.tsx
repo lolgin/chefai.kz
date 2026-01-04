@@ -231,8 +231,8 @@ const AppContent: React.FC = () => {
     return [searchQuery.toUpperCase() || 'SEARCH'].filter(Boolean);
   }, [
     // КРИТИЧЕСКИ ВАЖНО: зависим не от ссылки на массив, а от его содержимого!
-    // Используем JSON.stringify для глубокого сравнения
-    suggestions.length > 0 ? suggestions.map(s => s.url).join(',') : searchQuery
+    // Создаем стабильный хеш из URL+NAME для предотвращения прыганий
+    suggestions.length > 0 ? suggestions.map(s => `${s.url}|${s.name}`).join('::') : searchQuery
   ]);
 
   const nodesItems = useMemo(() => {
@@ -485,6 +485,12 @@ const AppContent: React.FC = () => {
 
             {/* Background 3D Shards - выбор движка рендеринга */}
             {(() => {
+              // Если визуализация отключена - не показываем облако
+              const visualizationEnabled = settings.displaySettings?.visualizationEnabled ?? true;
+              if (!visualizationEnabled) {
+                return null;
+              }
+              
               const currentEngine = settings.display?.renderEngine || RenderEngine.THREEJS;
               
               // CSS 3D движок (легковесный)
@@ -558,6 +564,7 @@ const AppContent: React.FC = () => {
                     onDragStart={() => setIsDragging(true)}
                     onDragEnd={() => setIsDragging(false)}
                     theme={theme}
+                    fontSize={settings.displaySettings?.fontSize || 'lg'}
                   />
                 );
               }

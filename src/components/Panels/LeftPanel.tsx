@@ -9,9 +9,10 @@
  */
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Hexagon, Globe, Orbit, Edit2, Trash2, Check, X, MoreVertical } from 'lucide-react';
+import { Hexagon, Globe, Orbit, Edit2, Trash2, Check, X, MoreVertical, ChevronDown } from 'lucide-react';
 import { Provider, CustomNode } from '../../types';
 import { useSettings } from '../../contexts/SettingsContext';
+import { RENDER_ENGINES, RenderEngine } from '../../constants/renderEngines';
 
 interface LeftPanelProps {
   isOpen: boolean;
@@ -39,7 +40,8 @@ export const LeftPanel: React.FC<LeftPanelProps> = ({
   theme
 }) => {
   const { settings, updateDisplaySettings } = useSettings();
-  const use3D = settings.displaySettings?.use3DCosmicView ?? false;
+  const currentEngine = settings.displaySettings?.renderEngine || RenderEngine.THREEJS;
+  const [isEngineDropdownOpen, setIsEngineDropdownOpen] = useState(false);
   
   const [editingNode, setEditingNode] = useState<CustomNode | null>(null);
   const [editName, setEditName] = useState('');
@@ -114,30 +116,97 @@ export const LeftPanel: React.FC<LeftPanelProps> = ({
           <Hexagon size={12} /> NEURAL_CORE
         </h3>
         
-        {/* Переключатель режима визуализации */}
-        <div className="flex gap-1 p-1 rounded-lg bg-black/20">
+        {/* Dropdown для выбора движка рендеринга */}
+        <div className="relative">
           <button
-            onClick={() => updateDisplaySettings({ use3DCosmicView: false })}
-            className="flex-1 py-1.5 px-2 rounded text-[8px] font-black uppercase tracking-wider flex items-center justify-center gap-1 transition-all"
-            style={{
-              backgroundColor: !use3D ? theme.text : 'transparent',
-              color: !use3D ? '#000' : theme.text,
-              opacity: !use3D ? 1 : 0.5
-            }}
+            onClick={() => setIsEngineDropdownOpen(!isEngineDropdownOpen)}
+            className="w-full flex items-center justify-between px-3 py-2 rounded-lg bg-black/20 hover:bg-black/30 transition-all border"
+            style={{ borderColor: `${theme.text}22`, color: theme.text }}
           >
-            <Globe size={10} /> CLASSIC
+            <div className="flex items-center gap-2">
+              <span className="text-lg">
+                {RENDER_ENGINES.find(e => e.id === currentEngine)?.icon || '🎨'}
+              </span>
+              <div className="text-left">
+                <div className="text-[10px] font-black uppercase tracking-wider">
+                  {RENDER_ENGINES.find(e => e.id === currentEngine)?.name || 'Three.js'}
+                </div>
+                <div className="text-[7px] opacity-50">
+                  {RENDER_ENGINES.find(e => e.id === currentEngine)?.performance || 'medium'}
+                </div>
+              </div>
+            </div>
+            <ChevronDown 
+              size={14} 
+              className="transition-transform"
+              style={{ transform: isEngineDropdownOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}
+            />
           </button>
-          <button
-            onClick={() => updateDisplaySettings({ use3DCosmicView: true })}
-            className="flex-1 py-1.5 px-2 rounded text-[8px] font-black uppercase tracking-wider flex items-center justify-center gap-1 transition-all"
-            style={{
-              backgroundColor: use3D ? theme.text : 'transparent',
-              color: use3D ? '#000' : theme.text,
-              opacity: use3D ? 1 : 0.5
-            }}
-          >
-            <Orbit size={10} /> COSMIC
-          </button>
+          
+          {/* Dropdown menu */}
+          {isEngineDropdownOpen && (
+            <div 
+              className="absolute top-full left-0 right-0 mt-1 py-1 rounded-lg bg-black/95 backdrop-blur-xl border shadow-xl z-50 max-h-80 overflow-y-auto"
+              style={{ borderColor: `${theme.text}22` }}
+            >
+              {RENDER_ENGINES.map(engine => {
+                const isActive = currentEngine === engine.id;
+                const isAvailable = engine.id === RenderEngine.CSS3D || engine.id === RenderEngine.THREEJS; // Пока доступны только эти
+                
+                return (
+                  <button
+                    key={engine.id}
+                    onClick={() => {
+                      if (isAvailable) {
+                        updateDisplaySettings({ renderEngine: engine.id });
+                        setIsEngineDropdownOpen(false);
+                      }
+                    }}
+                    disabled={!isAvailable}
+                    className="w-full px-3 py-2 flex items-start gap-2 hover:bg-white/10 transition-all text-left"
+                    style={{
+                      backgroundColor: isActive ? `${theme.text}15` : 'transparent',
+                      opacity: isAvailable ? 1 : 0.3,
+                      cursor: isAvailable ? 'pointer' : 'not-allowed'
+                    }}
+                  >
+                    <span className="text-xl mt-0.5">{engine.icon}</span>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[13px] font-black uppercase tracking-wider" style={{ color: theme.text }}>
+                          {engine.name}
+                        </span>
+                        {!isAvailable && (
+                          <span className="text-[7px] px-1.5 py-0.5 rounded bg-yellow-500/20 text-yellow-400">
+                            SOON
+                          </span>
+                        )}
+                        {isActive && (
+                          <span className="text-[7px] px-1.5 py-0.5 rounded" style={{ backgroundColor: theme.text + '20', color: theme.text }}>
+                            ACTIVE
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-[9px] opacity-60 mt-0.5" style={{ color: theme.text }}>
+                        {engine.description}
+                      </div>
+                      <div className="flex flex-wrap gap-1 mt-1">
+                        {engine.features.slice(0, 3).map((feat, i) => (
+                          <span 
+                            key={i} 
+                            className="text-[6px] px-1 py-0.5 rounded"
+                            style={{ backgroundColor: `${theme.text}10`, color: theme.text }}
+                          >
+                            {feat}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          )}
         </div>
         
         {providers.map(p => {

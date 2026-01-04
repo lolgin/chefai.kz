@@ -25,6 +25,7 @@ interface ShardCloudProps {
   onDragEnd: () => void;
   theme: { accent: string };
   onResetPositions?: () => void;
+  fontSize?: 'xs' | 'sm' | 'md' | 'lg' | 'xl' | 'xxl';
 }
 
 export const ShardCloud: React.FC<ShardCloudProps> = ({
@@ -35,8 +36,20 @@ export const ShardCloud: React.FC<ShardCloudProps> = ({
   onDragStart,
   onDragEnd,
   theme,
-  onResetPositions
+  onResetPositions,
+  fontSize = 'lg'
 }) => {
+  // Мапинг размеров шрифта
+  const fontSizeMap = {
+    xs: 0.5,
+    sm: 0.7,
+    md: 0.9,
+    lg: 1.0,
+    xl: 1.3,
+    xxl: 1.7
+  };
+  const fontScale = fontSizeMap[fontSize];
+  
   const containerRef = useRef<HTMLDivElement>(null);
   const [localRotation, setLocalRotation] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
@@ -237,7 +250,7 @@ export const ShardCloud: React.FC<ShardCloudProps> = ({
               <span
                 className="font-black uppercase tracking-widest block select-none"
                 style={{
-                  fontSize: `${shard.size}rem`,
+                  fontSize: `${shard.size * fontScale}rem`,
                   color: i % 5 === 0 ? theme.accent : 'inherit',
                   opacity: 0.15 + (position.z + 340) / 680,
                   transition: 'none',

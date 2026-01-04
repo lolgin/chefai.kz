@@ -141,7 +141,8 @@ export interface DisplaySettings {
   animationSpeed: 'slow' | 'normal' | 'fast';
   borderStyle: 'none' | 'solid' | 'gradient' | 'glow';
   spacing: 'tight' | 'normal' | 'relaxed';
-  use3DCosmicView?: boolean; // Переключение между CSS 3D и Three.js
+  use3DCosmicView?: boolean; // DEPRECATED: Переключение между CSS 3D и Three.js (использовать renderEngine вместо)
+  renderEngine?: string; // ID движка рендеринга (из RenderEngine enum)
   cloudLayout?: CloudLayout; // Тип раскладки облака
   cloudSettings?: CloudSettings; // Настройки облака тегов
   visualizationProvider?: string; // Провайдер визуализации (из VisualizationProvider enum)

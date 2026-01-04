@@ -48,7 +48,8 @@ const DEFAULT_SETTINGS: AppSettings = {
     randomColors: false,
     animationSpeed: 'normal',
     borderStyle: 'gradient',
-    use3DCosmicView: true, // Новая опция для переключения между CSS 3D и Three.js
+    use3DCosmicView: true, // DEPRECATED: для обратной совместимости
+    renderEngine: 'threejs', // По умолчанию Three.js движок
     spacing: 'normal',
     visualizationProvider: undefined, // Провайдер визуализации отключен по умолчанию
     visualizationEnabled: true, // Визуализация включена по умолчанию
