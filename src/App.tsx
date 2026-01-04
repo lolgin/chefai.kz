@@ -180,10 +180,10 @@ const AppContent: React.FC = () => {
           };
           break;
           
-        case 'plane': // Плоскость
-          const gridSize = Math.ceil(Math.sqrt(items.length));
-          const row = Math.floor(i / gridSize);
-          const col = i % gridSize;
+        case 'plane': // Плоскость - используем хеш вместо индекса!
+          const gridSize = Math.ceil(Math.sqrt(1000)); // Фиксированный размер сетки
+          const row = Math.floor(stableIndex / gridSize);
+          const col = stableIndex % gridSize;
           position = {
             x: (col - gridSize / 2) * (radius * 0.3),
             y: (row - gridSize / 2) * (radius * 0.3),
