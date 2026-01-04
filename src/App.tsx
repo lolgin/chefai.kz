@@ -633,7 +633,8 @@ const AppContent: React.FC = () => {
                 onDragEnd={() => setIsDragging(false)}
                 theme={theme}
               />
-            )}
+              );
+            })()}
 
             
             {/* Кнопка закрытия модуля */}
