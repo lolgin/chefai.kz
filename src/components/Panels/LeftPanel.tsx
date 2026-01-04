@@ -108,36 +108,36 @@ export const LeftPanel: React.FC<LeftPanelProps> = ({
   return (
     <div
       className="hidden lg:flex transition-all duration-500 border-r bg-black/5 flex-col overflow-hidden"
-      style={{ borderColor: `${theme.text}11`, width: isOpen ? '280px' : '0' }}
+      style={{ borderColor: `${theme.text}11`, width: isOpen ? '380px' : '0' }}
     >
-      <div className="p-6 w-80 h-full overflow-y-auto no-scrollbar space-y-6">
-        <h3 className="text-[10px] font-black uppercase tracking-widest flex items-center gap-2"
+      <div className="p-8 w-[380px] h-full overflow-y-auto no-scrollbar space-y-8">
+        <h3 className="text-[14px] font-black uppercase tracking-widest flex items-center gap-3"
             style={{ color: theme.text }}>
-          <Hexagon size={12} /> NEURAL_CORE
+          <Hexagon size={18} /> NEURAL_CORE
         </h3>
         
         {/* Dropdown для выбора движка рендеринга */}
         <div className="relative">
           <button
             onClick={() => setIsEngineDropdownOpen(!isEngineDropdownOpen)}
-            className="w-full flex items-center justify-between px-3 py-2 rounded-lg bg-black/20 hover:bg-black/30 transition-all border"
+            className="w-full flex items-center justify-between px-4 py-3 rounded-lg bg-black/20 hover:bg-black/30 transition-all border"
             style={{ borderColor: `${theme.text}22`, color: theme.text }}
           >
-            <div className="flex items-center gap-2">
-              <span className="text-lg">
+            <div className="flex items-center gap-3">
+              <span className="text-2xl">
                 {RENDER_ENGINES.find(e => e.id === currentEngine)?.icon || '🎨'}
               </span>
               <div className="text-left">
-                <div className="text-[10px] font-black uppercase tracking-wider">
+                <div className="text-[13px] font-black uppercase tracking-wider">
                   {RENDER_ENGINES.find(e => e.id === currentEngine)?.name || 'Three.js'}
                 </div>
-                <div className="text-[7px] opacity-50">
+                <div className="text-[10px] opacity-50">
                   {RENDER_ENGINES.find(e => e.id === currentEngine)?.performance || 'medium'}
                 </div>
               </div>
             </div>
             <ChevronDown 
-              size={14} 
+              size={18} 
               className="transition-transform"
               style={{ transform: isEngineDropdownOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}
             />
@@ -163,17 +163,17 @@ export const LeftPanel: React.FC<LeftPanelProps> = ({
                       }
                     }}
                     disabled={!isAvailable}
-                    className="w-full px-3 py-2 flex items-start gap-2 hover:bg-white/10 transition-all text-left"
+                    className="w-full px-4 py-3 flex items-start gap-3 hover:bg-white/10 transition-all text-left"
                     style={{
                       backgroundColor: isActive ? `${theme.text}15` : 'transparent',
                       opacity: isAvailable ? 1 : 0.3,
                       cursor: isAvailable ? 'pointer' : 'not-allowed'
                     }}
                   >
-                    <span className="text-xl mt-0.5">{engine.icon}</span>
+                    <span className="text-2xl mt-0.5">{engine.icon}</span>
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
-                        <span className="text-[13px] font-black uppercase tracking-wider" style={{ color: theme.text }}>
+                        <span className="text-[16px] font-black uppercase tracking-wider" style={{ color: theme.text }}>
                           {engine.name}
                         </span>
                         {!isAvailable && (
@@ -187,14 +187,14 @@ export const LeftPanel: React.FC<LeftPanelProps> = ({
                           </span>
                         )}
                       </div>
-                      <div className="text-[9px] opacity-60 mt-0.5" style={{ color: theme.text }}>
+                      <div className="text-[11px] opacity-60 mt-1" style={{ color: theme.text }}>
                         {engine.description}
                       </div>
-                      <div className="flex flex-wrap gap-1 mt-1">
+                      <div className="flex flex-wrap gap-1.5 mt-2">
                         {engine.features.slice(0, 3).map((feat, i) => (
                           <span 
                             key={i} 
-                            className="text-[6px] px-1 py-0.5 rounded"
+                            className="text-[9px] px-2 py-1 rounded"
                             style={{ backgroundColor: `${theme.text}10`, color: theme.text }}
                           >
                             {feat}
@@ -215,8 +215,8 @@ export const LeftPanel: React.FC<LeftPanelProps> = ({
             : genresByProvider[p.id] || [];
           
           return (
-            <div key={p.id} className="space-y-1">
-              <div className="text-[7px] font-black uppercase opacity-20 mb-1.5 px-3 tracking-tighter">
+            <div key={p.id} className="space-y-2">
+              <div className="text-[10px] font-black uppercase opacity-30 mb-2 px-4 tracking-wider">
                 {p.name}
               </div>
               
@@ -269,14 +269,14 @@ export const LeftPanel: React.FC<LeftPanelProps> = ({
                 
                 return (
                   <div key={name} className="relative">
-                    <div className="flex items-center gap-1">
+                    <div className="flex items-center gap-2">
                       <button
                         onClick={() => url && onGenreClick(url, name, p.id as Provider, true)}
                         onMouseDown={() => isCustom && node && handleLongPressStart(node)}
                         onMouseUp={handleLongPressEnd}
                         onTouchStart={() => isCustom && node && handleLongPressStart(node)}
                         onTouchEnd={handleLongPressEnd}
-                        className="flex-1 text-left px-3 py-1.5 rounded-lg text-[9px] font-black uppercase transition-all shadow-md"
+                        className="flex-1 text-left px-4 py-2.5 rounded-lg text-[12px] font-black uppercase transition-all shadow-md"
                         style={{
                           backgroundColor: currentGenre === name ? theme.accent : 'transparent',
                           color: currentGenre === name ? (theme.isLight ? '#000' : '#fff') : theme.text,
@@ -296,7 +296,7 @@ export const LeftPanel: React.FC<LeftPanelProps> = ({
                             e.stopPropagation();
                             setContextMenuNode(hasContextMenu ? null : node);
                           }}
-                          className="p-1.5 rounded-md hover:bg-white/20 active:bg-white/30 transition-all shrink-0"
+                          className="p-2 rounded-md hover:bg-white/20 active:bg-white/30 transition-all shrink-0"
                           style={{ 
                             color: theme.text, 
                             opacity: hasContextMenu ? 1 : 0.6,
@@ -304,7 +304,7 @@ export const LeftPanel: React.FC<LeftPanelProps> = ({
                           }}
                           title="Меню управления"
                         >
-                          <MoreVertical size={16} />
+                          <MoreVertical size={20} />
                         </button>
                       )}
                     </div>
