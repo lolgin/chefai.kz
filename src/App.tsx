@@ -226,6 +226,10 @@ const AppContent: React.FC = () => {
   // Кеш для discoveryItems чтобы избежать пересоздания массива
   const discoveryItemsCacheRef = useRef<any[]>([]);
   const discoveryItemsHashRef = useRef<string>('');
+  
+  // Кеш для nodesItems
+  const nodesItemsCacheRef = useRef<any[]>([]);
+  const nodesItemsHashRef = useRef<string>('');
 
   // Стабильные массивы для каждого модуля (мемоизация предотвращает ненужные пересоздания)
   const discoveryItems = useMemo(() => {
@@ -249,15 +253,27 @@ const AppContent: React.FC = () => {
   }, [suggestions, searchQuery]);
 
   const nodesItems = useMemo(() => {
-    return [
+    // Создаем хеш текущего состояния
+    const customNodesHash = settings.customNodes.map(n => `${n.url}|${n.name}`).join('::');
+    const providersHash = PROVIDERS.map(p => p.id).join('::');
+    const genresHash = PROVIDERS.flatMap(p => (GENRES_BY_PROVIDER[p.id as Provider] || []).map(g => typeof g === 'string' ? g : g.name)).join('::');
+    const currentHash = `${customNodesHash}||${providersHash}||${genresHash}`;
+    
+    // Если хеш не изменился - возвращаем закешированный массив
+    if (currentHash === nodesItemsHashRef.current) {
+      return nodesItemsCacheRef.current;
+    }
+    
+    // Хеш изменился - создаем новый массив
+    nodesItemsHashRef.current = currentHash;
+    const newItems = [
       ...settings.customNodes,
       ...PROVIDERS,
       ...PROVIDERS.flatMap(p => GENRES_BY_PROVIDER[p.id as Provider] || [])
     ].slice(0, 45);
-  }, [
-    // Зависим от содержимого customNodes, не от ссылки
-    settings.customNodes.map(n => n.url).join(',')
-  ]);
+    nodesItemsCacheRef.current = newItems;
+    return newItems;
+  }, [settings.customNodes]);
 
   const modelsItems = useMemo(() => {
     return BUILT_IN_MODELS;
@@ -779,7 +795,6 @@ const AppContent: React.FC = () => {
                 type="text"
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
-                onFocus={() => setActiveModule('discovery')}
                 placeholder="Search stations..."
                 className="w-64 px-4 py-2 pr-10 text-sm rounded-full bg-black/20 backdrop-blur-xl border transition-all focus:w-96 focus:bg-black/40 outline-none"
                 style={{ 
