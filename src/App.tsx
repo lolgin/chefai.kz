@@ -220,42 +220,45 @@ const AppContent: React.FC = () => {
     return Array.from(new Set([...parts, searchQuery.toUpperCase()])).slice(0, 15);
   }, [metadata, searchQuery]);
 
+  // Стабильные массивы для каждого модуля (мемоизация предотвращает ненужные пересоздания)
+  const discoveryItems = useMemo(() => {
+    if (suggestions.length > 0) {
+      return suggestions.slice(0, 40);
+    }
+    return [searchQuery.toUpperCase() || 'SEARCH'].filter(Boolean);
+  }, [suggestions, searchQuery]);
+
+  const nodesItems = useMemo(() => {
+    return [
+      ...settings.customNodes,
+      ...PROVIDERS,
+      ...PROVIDERS.flatMap(p => GENRES_BY_PROVIDER[p.id as Provider] || [])
+    ].slice(0, 45);
+  }, [settings.customNodes]);
+
   // Фоновое облако - переключается в зависимости от активного модуля
   const mainCloudShards = useMemo(() => {
     // Если активен модуль - показываем его облако с ПОЛНЫМИ ОБЪЕКТАМИ
     if (activeModule === 'discovery') {
-      // Если есть suggestions - показываем их, иначе пустое облако (без "симафора")
-      if (suggestions.length > 0) {
-        // Сохраняем полные объекты DiscoveredStream для доступа к favicon, bitrate, url
-        return generateCloud(suggestions.slice(0, 40), 340);
-      }
-      // Пока нет результатов - показываем пустое облако или минимальное
-      return generateCloud([searchQuery.toUpperCase() || 'SEARCH'].filter(Boolean), 340);
+      return generateCloud(discoveryItems, 340);
     } else if (activeModule === 'nodes') {
-      // Для nodes - микс из customNodes и жанров/провайдеров
-      const allNodes = [
-        ...settings.customNodes,
-        ...PROVIDERS,
-        ...PROVIDERS.flatMap(p => GENRES_BY_PROVIDER[p.id as Provider] || [])
-      ].slice(0, 45);
-      return generateCloud(allNodes, 340);
+      return generateCloud(nodesItems, 340);
     } else if (activeModule === 'themes') {
-      // Для themes - полные объекты с name, colors, layout
+      // THEMES - константа, не требует мемоизации
       return generateCloud(THEMES, 340);
     }
     
     // Дефолтное облако когда модуль не активен - чистый запуск (пустое)
     return generateCloud([], 340);
-  }, [searchQuery, suggestions, activeModule, settings.customNodes, generateCloud]);
+  }, [activeModule, discoveryItems, nodesItems, generateCloud]);
 
-  // Облако для модулей
+  // Облако для модулей (используем те же стабильные массивы)
   const moduleCloudItems = useMemo(() => {
     switch (activeModule) {
       case 'discovery':
-        return generateCloud(suggestions.slice(0, 40), 280);
+        return generateCloud(discoveryItems, 280);
       case 'nodes':
-        const nodeList = [...settings.customNodes, ...PROVIDERS.flatMap(p => GENRES_BY_PROVIDER[p.id as Provider] || [])];
-        return generateCloud(nodeList.slice(0, 45), 280);
+        return generateCloud(nodesItems, 280);
       case 'themes':
         return generateCloud(THEMES, 240);
       case 'intel':
@@ -264,7 +267,7 @@ const AppContent: React.FC = () => {
       default:
         return [];
     }
-  }, [activeModule, suggestions, settings.customNodes, systemLogs]);
+  }, [activeModule, discoveryItems, nodesItems, systemLogs, generateCloud]);
 
   const purgeBadSignalsWrapper = async () => {
     setIsTestingSignals(true);
