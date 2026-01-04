@@ -9,8 +9,9 @@
  */
 
 import React from 'react';
-import { Play, Pause, SkipForward, SkipBack, Shuffle, Loader2 } from 'lucide-react';
+import { Play, Pause, SkipForward, SkipBack, Shuffle, Loader2, RefreshCw } from 'lucide-react';
 import { IconButton } from '../UI/IconButton';
+import { CloudLayout } from '../../types';
 
 interface PlayerControlsProps {
   isPlaying: boolean;
@@ -20,6 +21,9 @@ interface PlayerControlsProps {
   onNext: () => void;
   onPrev: () => void;
   onToggleShuffle: () => void;
+  onResetPositions?: () => void;
+  onChangeLayout?: () => void;
+  currentLayout?: CloudLayout;
 }
 
 export const PlayerControls: React.FC<PlayerControlsProps> = ({
@@ -29,8 +33,19 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
   onTogglePlay,
   onNext,
   onPrev,
-  onToggleShuffle
+  onToggleShuffle,
+  onResetPositions,
+  onChangeLayout,
+  currentLayout = 'sphere'
 }) => {
+  const layoutIcons: Record<CloudLayout, string> = {
+    sphere: '🌐',
+    spiral: '🌀',
+    cube: '📦',
+    plane: '⬜',
+    cylinder: '🥫'
+  };
+
   return (
     <div className="flex items-center gap-8 lg:gap-14">
       <IconButton
@@ -68,6 +83,26 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
       >
         <Shuffle size={20} />
       </button>
+      
+      {onResetPositions && (
+        <button
+          onClick={onResetPositions}
+          className="p-3 rounded-xl transition-all opacity-20 hover:opacity-100"
+          title="Reset Cloud Positions"
+        >
+          <RefreshCw size={20} />
+        </button>
+      )}
+      
+      {onChangeLayout && (
+        <button
+          onClick={onChangeLayout}
+          className="p-3 rounded-xl transition-all opacity-20 hover:opacity-100"
+          title={`Layout: ${currentLayout}`}
+        >
+          <span className="text-xl">{layoutIcons[currentLayout]}</span>
+        </button>
+      )}
     </div>
   );
 };

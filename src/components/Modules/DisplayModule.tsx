@@ -135,6 +135,44 @@ export const DisplayModule: React.FC<DisplayModuleProps> = ({
       <div className="space-y-6 pt-6 border-t border-current/10">
         <label className="flex items-center justify-between cursor-pointer group">
           <div className="flex items-center gap-4">
+            <Sparkles size={24} />
+            <div>
+              <div className="font-black text-base">Спутники Планет</div>
+              <div className="text-xs opacity-60">Маленькие луны вокруг планет</div>
+            </div>
+          </div>
+          <input
+            type="checkbox"
+            checked={displaySettings.showSatellites ?? true}
+            onChange={e => onUpdate({ showSatellites: e.target.checked })}
+            className="w-16 h-8 rounded-full appearance-none cursor-pointer transition-all"
+            style={{
+              backgroundColor: displaySettings.showSatellites ?? true ? 'var(--accent)' : 'rgba(0,0,0,0.1)'
+            }}
+          />
+        </label>
+
+        <label className="flex items-center justify-between cursor-pointer group">
+          <div className="flex items-center gap-4">
+            <Type size={24} />
+            <div>
+              <div className="font-black text-base">Надписи</div>
+              <div className="text-xs opacity-60">Названия под планетами</div>
+            </div>
+          </div>
+          <input
+            type="checkbox"
+            checked={displaySettings.showLabels ?? true}
+            onChange={e => onUpdate({ showLabels: e.target.checked })}
+            className="w-16 h-8 rounded-full appearance-none cursor-pointer transition-all"
+            style={{
+              backgroundColor: displaySettings.showLabels ?? true ? 'var(--accent)' : 'rgba(0,0,0,0.1)'
+            }}
+          />
+        </label>
+
+        <label className="flex items-center justify-between cursor-pointer group">
+          <div className="flex items-center gap-4">
             <Paintbrush size={24} />
             <div>
               <div className="font-black text-base">Стеклянный Эффект</div>
@@ -186,6 +224,25 @@ export const DisplayModule: React.FC<DisplayModuleProps> = ({
             className="w-16 h-8 rounded-full appearance-none cursor-pointer transition-all"
             style={{
               backgroundColor: displaySettings.compactMode ? 'var(--accent)' : 'rgba(0,0,0,0.1)'
+            }}
+          />
+        </label>
+
+        <label className="flex items-center justify-between cursor-pointer group">
+          <div className="flex items-center gap-4">
+            <Sparkles size={24} />
+            <div>
+              <div className="font-black text-base">🌌 Космический Режим</div>
+              <div className="text-xs opacity-60">3D планеты вместо текстовых тегов</div>
+            </div>
+          </div>
+          <input
+            type="checkbox"
+            checked={displaySettings.use3DCosmicView}
+            onChange={e => onUpdate({ use3DCosmicView: e.target.checked })}
+            className="w-16 h-8 rounded-full appearance-none cursor-pointer transition-all"
+            style={{
+              backgroundColor: displaySettings.use3DCosmicView ? 'var(--accent)' : 'rgba(0,0,0,0.1)'
             }}
           />
         </label>

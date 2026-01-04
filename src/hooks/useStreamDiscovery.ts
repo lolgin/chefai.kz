@@ -18,7 +18,7 @@ interface UseStreamDiscoveryOptions {
 }
 
 export const useStreamDiscovery = ({ isInitialized, onLog }: UseStreamDiscoveryOptions) => {
-  const [searchQuery, setSearchQuery] = useState('Cyberpunk');
+  const [searchQuery, setSearchQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
   const [suggestions, setSuggestions] = useState<DiscoveredStream[]>([]);
   const [sortBy, setSortBy] = useState<'quality' | 'name' | 'favicon'>('quality');

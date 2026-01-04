@@ -4,70 +4,245 @@
  * Компонент 3D облака тегов на фоне
  * Содержит:
  * - Вращающееся 3D облако
- * - Интерактивные теги
- * - Анимация
+ * - Интерактивные теги с перетаскиванием
+ * - Управление: ПКМ - вращение, колесико - zoom
  */
 
-import React from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 
 interface ShardCloudProps {
   rotation: { x: number; y: number };
   shards: Array<{
-    data: any; // Может быть строка или объект (DiscoveredStream, Theme, Node, etc)
+    data: any;
     x: number;
     y: number;
     z: number;
     size: number;
   }>;
-  onShardClick: (item: any) => void; // Передаём весь объект или строку
+  onShardClick: (item: any) => void;
   isDragging: boolean;
   onDragStart: () => void;
   onDragEnd: () => void;
   theme: { accent: string };
+  onResetPositions?: () => void;
 }
 
 export const ShardCloud: React.FC<ShardCloudProps> = ({
-  rotation,
+  rotation: externalRotation,
   shards,
   onShardClick,
   isDragging,
   onDragStart,
   onDragEnd,
-  theme
+  theme,
+  onResetPositions
 }) => {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [localRotation, setLocalRotation] = useState({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
+  const [isRightDragging, setIsRightDragging] = useState(false);
+  const dragStartRef = useRef({ x: 0, y: 0 });
+  const rotationStartRef = useRef({ x: 0, y: 0 });
+  
+  // Хранилище пользовательских позиций тегов
+  const [customPositions, setCustomPositions] = useState<Map<string, { x: number; y: number; z: number }>>(new Map());
+  const [draggedShard, setDraggedShard] = useState<number | null>(null);
+  const shardDragStartRef = useRef({ x: 0, y: 0 });
+  
+  // Загрузка сохраненных позиций из localStorage
+  useEffect(() => {
+    const loadPositions = () => {
+      const saved = localStorage.getItem('aurawave_custom_positions');
+      if (saved) {
+        try {
+          const data = JSON.parse(saved);
+          setCustomPositions(new Map(Object.entries(data)));
+        } catch (e) {
+          console.error('Failed to load custom positions');
+        }
+      } else {
+        setCustomPositions(new Map());
+      }
+    };
+    
+    loadPositions();
+    
+    // Слушаем событие сброса позиций
+    const handleReset = () => {
+      setCustomPositions(new Map());
+    };
+    
+    window.addEventListener('resetCloudPositions', handleReset);
+    return () => window.removeEventListener('resetCloudPositions', handleReset);
+  }, []);
+  
+  // Сохранение позиций в localStorage
+  const savePositions = (positions: Map<string, { x: number; y: number; z: number }>) => {
+    const obj = Object.fromEntries(positions);
+    localStorage.setItem('aurawave_custom_positions', JSON.stringify(obj));
+  };
+
+  // Вращение правой кнопкой мыши
+  useEffect(() => {
+    const handleMouseDown = (e: MouseEvent) => {
+      if (e.button === 2) { // Правая кнопка
+        e.preventDefault();
+        setIsRightDragging(true);
+        dragStartRef.current = { x: e.clientX, y: e.clientY };
+        rotationStartRef.current = { ...localRotation };
+      }
+    };
+
+    const handleMouseMove = (e: MouseEvent) => {
+      if (isRightDragging) {
+        const dx = e.clientX - dragStartRef.current.x;
+        const dy = e.clientY - dragStartRef.current.y;
+        setLocalRotation({
+          x: rotationStartRef.current.x + dy * 0.3,
+          y: rotationStartRef.current.y + dx * 0.3
+        });
+      }
+      
+      // Перетаскивание отдельного тега
+      if (draggedShard !== null) {
+        const dx = e.clientX - shardDragStartRef.current.x;
+        const dy = e.clientY - shardDragStartRef.current.y;
+        
+        const shard = shards[draggedShard];
+        // Используем ПОЛНОЕ имя как ключ
+        const fullName = typeof shard.data === 'string' 
+          ? shard.data 
+          : (shard.data?.name || shard.data?.title || shard.data?.url || `item_${draggedShard}`);
+        
+        // Получаем текущую позицию (кастомную или исходную)
+        const currentPos = customPositions.get(fullName) || { x: shard.x, y: shard.y, z: shard.z };
+        
+        // Обновляем позицию (с учетом масштаба)
+        const newPos = {
+          x: currentPos.x + dx / zoom,
+          y: currentPos.y + dy / zoom,
+          z: currentPos.z
+        };
+        
+        setCustomPositions(prev => {
+          const updated = new Map(prev);
+          updated.set(fullName, newPos);
+          return updated;
+        });
+        
+        shardDragStartRef.current = { x: e.clientX, y: e.clientY };
+      }
+    };
+
+    const handleMouseUp = (e: MouseEvent) => {
+      if (e.button === 2) {
+        setIsRightDragging(false);
+      }
+      
+      if (draggedShard !== null) {
+        // Сохраняем позиции при окончании перетаскивания
+        savePositions(customPositions);
+        setDraggedShard(null);
+      }
+    };
+
+    const handleContextMenu = (e: MouseEvent) => {
+      e.preventDefault(); // Отключаем контекстное меню
+    };
+
+    window.addEventListener('mousedown', handleMouseDown);
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
+    window.addEventListener('contextmenu', handleContextMenu);
+
+    return () => {
+      window.removeEventListener('mousedown', handleMouseDown);
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+      window.removeEventListener('contextmenu', handleContextMenu);
+    };
+  }, [isRightDragging, localRotation, draggedShard, shards, customPositions, zoom]);
+
+  // Zoom колесиком мыши
+  useEffect(() => {
+    const handleWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      setZoom(prev => Math.max(0.3, Math.min(3, prev - e.deltaY * 0.001)));
+    };
+
+    const container = containerRef.current;
+    if (container) {
+      container.addEventListener('wheel', handleWheel, { passive: false });
+      return () => container.removeEventListener('wheel', handleWheel);
+    }
+  }, []);
+
+  const finalRotation = {
+    x: externalRotation.x + localRotation.x,
+    y: externalRotation.y + localRotation.y
+  };
+
   return (
     <div
-      className="scene-3d flex-1 pointer-events-none"
-      onMouseDown={onDragStart}
-      onMouseUp={onDragEnd}
+      ref={containerRef}
+      className="scene-3d flex-1 pointer-events-auto"
+      style={{ cursor: isRightDragging ? 'grabbing' : draggedShard !== null ? 'move' : 'default' }}
     >
       <div
         className="cloud-3d"
         style={{
-          transform: `rotateX(${rotation.x}deg) rotateY(${rotation.y}deg)`
+          transform: `rotateX(${finalRotation.x}deg) rotateY(${finalRotation.y}deg) scale(${zoom})`
         }}
       >
         {shards.map((shard, i) => {
-          // Извлекаем текст для отображения
-          const displayText = typeof shard.data === 'string' 
+          // Извлекаем ПОЛНОЕ имя для ключа
+          const fullName = typeof shard.data === 'string' 
             ? shard.data 
-            : (shard.data?.name || shard.data?.title || 'UNKNOWN');
+            : (shard.data?.name || shard.data?.title || shard.data?.url || `item_${i}`);
+          
+          // Извлекаем текст для отображения (обрезанный)
+          let displayText = fullName;
+          if (displayText.length > 12) {
+            displayText = displayText.substring(0, 12).toUpperCase();
+          }
+          
+          // Проверяем есть ли пользовательская позиция по ПОЛНОМУ имени
+          const customPos = customPositions.get(fullName);
+          const position = customPos || { x: shard.x, y: shard.y, z: shard.z };
           
           return (
             <div
               key={i}
               className="shard-item pointer-events-auto"
               style={{
-                transform: `translate3d(${shard.x}px, ${shard.y}px, ${shard.z}px) rotateY(${-rotation.y}deg) rotateX(${-rotation.x}deg)`
+                transform: `translate3d(${position.x}px, ${position.y}px, ${position.z}px) rotateY(${-finalRotation.y}deg) rotateX(${-finalRotation.x}deg)`,
+                transition: 'none',
+                cursor: draggedShard === i ? 'grabbing' : 'grab'
               }}
-              onClick={() => onShardClick(shard.data)}
+              onClick={(e) => {
+                // Клик только если не было перетаскивания
+                if (!isRightDragging && draggedShard === null) {
+                  onShardClick(shard.data);
+                }
+              }}
+              onMouseDown={(e) => {
+                // Левая кнопка - начало перетаскивания тега
+                if (e.button === 0) {
+                  e.stopPropagation();
+                  setDraggedShard(i);
+                  shardDragStartRef.current = { x: e.clientX, y: e.clientY };
+                }
+              }}
             >
               <span
-                className="font-black uppercase tracking-widest transition-all hover:scale-150 block"
+                className="font-black uppercase tracking-widest block select-none"
                 style={{
                   fontSize: `${shard.size}rem`,
                   color: i % 5 === 0 ? theme.accent : 'inherit',
-                  opacity: 0.15 + (shard.z + 340) / 680
+                  opacity: 0.15 + (position.z + 340) / 680,
+                  transition: 'none',
+                  whiteSpace: 'nowrap',
+                  pointerEvents: 'none'
                 }}
               >
                 {displayText}

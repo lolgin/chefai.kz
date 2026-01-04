@@ -1,0 +1,138 @@
+/* Cosmic Object Animations */
+
+/* STAR types */
+@keyframes pulse {
+  0%, 100% { filter: brightness(1) drop-shadow(0 0 10px currentColor); }
+  50% { filter: brightness(1.5) drop-shadow(0 0 20px currentColor); }
+}
+
+@keyframes pulse-slow {
+  0%, 100% { filter: brightness(1); }
+  50% { filter: brightness(1.3); }
+}
+
+@keyframes pulse-fast {
+  0%, 100% { filter: brightness(1); }
+  50% { filter: brightness(2); }
+}
+
+/* NEBULA types */
+@keyframes shimmer {
+  0%, 100% { filter: hue-rotate(0deg) saturate(1); }
+  50% { filter: hue-rotate(30deg) saturate(1.5); }
+}
+
+@keyframes nebula-flow {
+  0%, 100% { filter: blur(0px) opacity(1); }
+  50% { filter: blur(2px) opacity(0.8); }
+}
+
+/* ROTATION types */
+@keyframes rotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes swirl {
+  from { transform: rotate(0deg) scale(1); }
+  50% { transform: rotate(180deg) scale(1.1); }
+  to { transform: rotate(360deg) scale(1); }
+}
+
+@keyframes vortex {
+  0% { transform: rotate(0deg) scale(1); filter: blur(0px); }
+  50% { transform: rotate(180deg) scale(0.95); filter: blur(1px); }
+  100% { transform: rotate(360deg) scale(1); filter: blur(0px); }
+}
+
+/* EXOTIC types */
+@keyframes magnetic-pulse {
+  0%, 100% { 
+    filter: brightness(1) drop-shadow(0 0 15px #ff00ff);
+    transform: scale(1);
+  }
+  50% { 
+    filter: brightness(2) drop-shadow(0 0 30px #ff00ff);
+    transform: scale(1.05);
+  }
+}
+
+@keyframes pulse-beam {
+  0%, 100% { 
+    box-shadow: 0 0 20px currentColor, inset 0 0 20px currentColor;
+    filter: brightness(1);
+  }
+  50% { 
+    box-shadow: 0 0 40px currentColor, inset 0 0 40px currentColor;
+    filter: brightness(1.8);
+  }
+}
+
+@keyframes energy-burst {
+  0%, 100% { 
+    transform: scale(1);
+    filter: brightness(1) saturate(1);
+  }
+  25% { 
+    transform: scale(1.1);
+    filter: brightness(2) saturate(2);
+  }
+  75% { 
+    transform: scale(0.95);
+    filter: brightness(1.2) saturate(1.5);
+  }
+}
+
+@keyframes explosion {
+  0%, 100% { 
+    transform: scale(1);
+    filter: brightness(1) blur(0px);
+  }
+  50% { 
+    transform: scale(1.2);
+    filter: brightness(3) blur(2px);
+  }
+}
+
+/* PLANET types */
+@keyframes tumble {
+  0% { transform: rotateX(0deg) rotateY(0deg); }
+  25% { transform: rotateX(5deg) rotateY(90deg); }
+  50% { transform: rotateX(0deg) rotateY(180deg); }
+  75% { transform: rotateX(-5deg) rotateY(270deg); }
+  100% { transform: rotateX(0deg) rotateY(360deg); }
+}
+
+@keyframes orbit {
+  from { transform: rotate(0deg) translateX(5px) rotate(0deg); }
+  to { transform: rotate(360deg) translateX(5px) rotate(-360deg); }
+}
+
+/* COMET/ASTEROID */
+@keyframes trail {
+  0%, 100% { 
+    transform: translateX(0px);
+    filter: blur(0px);
+  }
+  50% { 
+    transform: translateX(10px);
+    filter: blur(1px);
+  }
+}
+
+/* Animation classes */
+.pulse { animation: pulse 2s ease-in-out infinite; }
+.pulse-slow { animation: pulse-slow 4s ease-in-out infinite; }
+.pulse-fast { animation: pulse-fast 1s ease-in-out infinite; }
+.shimmer { animation: shimmer 3s ease-in-out infinite; }
+.rotate { animation: rotate 10s linear infinite; }
+.swirl { animation: swirl 6s ease-in-out infinite; }
+.vortex { animation: vortex 4s ease-in-out infinite; }
+.magnetic-pulse { animation: magnetic-pulse 1.5s ease-in-out infinite; }
+.pulse-beam { animation: pulse-beam 2s ease-in-out infinite; }
+.energy-burst { animation: energy-burst 2.5s ease-in-out infinite; }
+.nebula-flow { animation: nebula-flow 5s ease-in-out infinite; }
+.explosion { animation: explosion 3s ease-in-out infinite; }
+.tumble { animation: tumble 20s linear infinite; }
+.trail { animation: trail 2s ease-in-out infinite; }
+.orbit { animation: orbit 15s linear infinite; }

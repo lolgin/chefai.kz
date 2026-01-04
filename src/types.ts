@@ -120,6 +120,8 @@ export interface ThemeScheme {
   shadowIntensity?: number; // Интенсивность теней
 }
 
+export type CloudLayout = 'sphere' | 'spiral' | 'cube' | 'plane' | 'cylinder';
+
 export interface DisplaySettings {
   fontSize: 'xs' | 'sm' | 'md' | 'lg' | 'xl' | 'xxl';
   iconSize: 'sm' | 'md' | 'lg' | 'xl';
@@ -129,6 +131,8 @@ export interface DisplaySettings {
   animationSpeed: 'slow' | 'normal' | 'fast';
   borderStyle: 'none' | 'solid' | 'gradient' | 'glow';
   spacing: 'tight' | 'normal' | 'relaxed';
+  use3DCosmicView?: boolean; // Переключение между CSS 3D и Three.js
+  cloudLayout?: CloudLayout; // Тип раскладки облака
 }
 
 export interface ModuleCustomization {

@@ -25,8 +25,8 @@
  * - Пользовательские ноды (станции)
  */
 
-import React, { useState, useEffect, useMemo } from 'react';
-import { Cpu, List, Globe, Database, Palette, Diamond, X, Search, Activity } from 'lucide-react';
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
+import { Cpu, List, Globe, Database, Palette, Diamond, X, Search, Activity, Radio } from 'lucide-react';
 
 // Контексты
 import { AudioProvider } from './contexts/AudioContext';
@@ -48,6 +48,7 @@ import { LeftPanel } from './components/Panels/LeftPanel';
 import { RightPanel } from './components/Panels/RightPanel';
 import { ModuleSwitcher, ModuleType } from './components/Panels/ModuleSwitcher';
 import { ShardCloud } from './components/Background/ShardCloud';
+import { ShardCloudThreeJS } from './components/Background/ShardCloudThreeJS';
 import { DiscoveryModule } from './components/Modules/DiscoveryModule';
 import { NodesModule } from './components/Modules/NodesModule';
 import { ThemesModule } from './components/Modules/ThemesModule';
@@ -55,7 +56,7 @@ import { ThemesModule } from './components/Modules/ThemesModule';
 // Сервисы и константы
 import { audioEngine } from './services/audioEngine';
 import { PROVIDERS, GENRES_BY_PROVIDER, GENRE_STREAMS, THEMES } from './constants';
-import { Provider } from './types';
+import { Provider, CloudLayout, CustomNode } from './types';
 import { DiscoveredStream } from './services/streamDiscovery';
 
 // Основной компонент приложения с контекстами
@@ -102,33 +103,114 @@ const AppContent: React.FC = () => {
   });
 
   // Анимация 3D вращения
-  useEffect(() => {
-    let frameId: number;
-    const animate = () => {
-      if (!isDragging) {
-        setRotation(prev => ({ x: prev.x + 0.04, y: prev.y + 0.06 }));
-        setModuleRotation(prev => ({ x: prev.x + 0.02, y: prev.y + 0.03 }));
-      }
-      frameId = requestAnimationFrame(animate);
-    };
-    frameId = requestAnimationFrame(animate);
-    return () => cancelAnimationFrame(frameId);
-  }, [isDragging]);
+  // Автовращение отключено - только ручное управление мышью
 
-  // Генерация облака тегов
-  const generateCloud = (items: any[], radius: number = 300) => {
+  // КЕШ позиций - чтобы объекты не прыгали при изменении списка
+  const positionCacheRef = useRef<Map<string, { x: number; y: number; z: number; size: number }>>(new Map());
+  
+  // Текущая раскладка облака
+  const currentLayout = settings.displaySettings?.cloudLayout || 'sphere';
+
+  // Генерация облака тегов с кешированием позиций и разными раскладками
+  const generateCloud = useCallback((items: any[], radius: number = 300) => {
+    // Простой хеш функция для стабильных позиций
+    const hashString = (str: string): number => {
+      let hash = 0;
+      for (let i = 0; i < str.length; i++) {
+        hash = ((hash << 5) - hash) + str.charCodeAt(i);
+        hash = hash & hash; // Конвертируем в 32bit integer
+      }
+      return Math.abs(hash);
+    };
+
     return items.map((item, i) => {
-      const phi = Math.acos(-1 + (2 * i) / items.length);
-      const theta = Math.sqrt(items.length * Math.PI) * phi;
+      // Получаем стабильный ключ от имени объекта
+      const name = typeof item === 'string' ? item : (item.name || item.title || item.url || String(i));
+      
+      // Проверяем кеш - если позиция уже есть, используем её
+      if (positionCacheRef.current.has(name)) {
+        const cached = positionCacheRef.current.get(name)!;
+        return {
+          data: item,
+          ...cached
+        };
+      }
+      
+      // Если нет в кеше - генерируем новую позицию
+      const hash = hashString(name);
+      const stableIndex = hash % 1000;
+      const stableSize = 0.7 + (hash % 60) / 100; // От 0.7 до 1.3
+      
+      let position;
+      
+      // Разные типы раскладки
+      switch (currentLayout) {
+        case 'sphere': // Сфера
+          const phi = Math.acos(-1 + (2 * stableIndex) / 1000);
+          const theta = Math.sqrt(1000 * Math.PI) * phi;
+          position = {
+            x: radius * Math.cos(theta) * Math.sin(phi),
+            y: radius * Math.sin(theta) * Math.sin(phi),
+            z: radius * Math.cos(phi),
+            size: stableSize
+          };
+          break;
+          
+        case 'spiral': // Спираль
+          const angle = stableIndex * 0.1;
+          const spiralRadius = (stableIndex / 1000) * radius;
+          position = {
+            x: spiralRadius * Math.cos(angle),
+            y: (stableIndex / 1000) * radius * 2 - radius,
+            z: spiralRadius * Math.sin(angle),
+            size: stableSize
+          };
+          break;
+          
+        case 'cube': // Куб
+          position = {
+            x: ((hash % 3) - 1) * radius * 0.8,
+            y: ((Math.floor(hash / 3) % 3) - 1) * radius * 0.8,
+            z: ((Math.floor(hash / 9) % 3) - 1) * radius * 0.8,
+            size: stableSize
+          };
+          break;
+          
+        case 'plane': // Плоскость
+          const gridSize = Math.ceil(Math.sqrt(items.length));
+          const row = Math.floor(i / gridSize);
+          const col = i % gridSize;
+          position = {
+            x: (col - gridSize / 2) * (radius * 0.3),
+            y: (row - gridSize / 2) * (radius * 0.3),
+            z: 0,
+            size: stableSize
+          };
+          break;
+          
+        case 'cylinder': // Цилиндр
+          const cylAngle = (stableIndex / 1000) * Math.PI * 2;
+          position = {
+            x: radius * Math.cos(cylAngle),
+            y: ((stableIndex % 100) / 100) * radius * 2 - radius,
+            z: radius * Math.sin(cylAngle),
+            size: stableSize
+          };
+          break;
+          
+        default:
+          position = { x: 0, y: 0, z: 0, size: stableSize };
+      }
+      
+      // Сохраняем в кеш
+      positionCacheRef.current.set(name, position);
+      
       return {
         data: item,
-        x: radius * Math.cos(theta) * Math.sin(phi),
-        y: radius * Math.sin(theta) * Math.sin(phi),
-        z: radius * Math.cos(phi),
-        size: 0.7 + Math.random() * 0.6
+        ...position
       };
     });
-  };
+  }, [currentLayout]);
 
   // Теги для текущего потока
   const currentStreamShards = useMemo(() => {
@@ -141,13 +223,13 @@ const AppContent: React.FC = () => {
   const mainCloudShards = useMemo(() => {
     // Если активен модуль - показываем его облако с ПОЛНЫМИ ОБЪЕКТАМИ
     if (activeModule === 'discovery') {
-      // Если поиск идет или suggestions пустой - показываем placeholder облако
-      if (isSearching || suggestions.length === 0) {
-        const placeholder = ['SEARCHING', 'LOADING', 'SCANNING', 'FREQUENCY', 'SIGNAL', 'BROADCAST', searchQuery.toUpperCase()];
-        return generateCloud(placeholder, 340);
+      // Если есть suggestions - показываем их, иначе пустое облако (без "симафора")
+      if (suggestions.length > 0) {
+        // Сохраняем полные объекты DiscoveredStream для доступа к favicon, bitrate, url
+        return generateCloud(suggestions.slice(0, 40), 340);
       }
-      // Сохраняем полные объекты DiscoveredStream для доступа к favicon, bitrate, url
-      return generateCloud(suggestions.slice(0, 40), 340);
+      // Пока нет результатов - показываем пустое облако или минимальное
+      return generateCloud([searchQuery.toUpperCase() || 'SEARCH'].filter(Boolean), 340);
     } else if (activeModule === 'nodes') {
       // Для nodes - микс из customNodes и жанров/провайдеров
       const allNodes = [
@@ -161,18 +243,8 @@ const AppContent: React.FC = () => {
       return generateCloud(THEMES, 340);
     }
     
-    // Дефолтное облако когда модуль не активен
-    const parts = new Set<string>();
-    if (shardSource === 'scan') {
-      searchQuery.split(/[\s\-_,.]+/).forEach(p => { if (p.length > 3) parts.add(p.toUpperCase()); });
-      suggestions.slice(0, 30).forEach(s => s.tags?.split(/[\s,]+/).forEach(t => { if (t.length > 3 && t.length < 15) parts.add(t.toUpperCase()); }));
-    } else if (shardSource === 'trace') {
-      systemLogs.forEach(l => l.msg.split(' ').forEach(w => { if (w.length > 4 && /^[A-Z_]+$/.test(w)) parts.add(w.toUpperCase()); }));
-    } else {
-      ['NEURAL', 'QUANTUM', 'CYBER', 'VOID', 'ECHO', 'SYNTH', 'ISOLATE', 'GHOST', 'VECTOR', 'RECURSIVE', 'SOMA', 'MATRIX'].forEach(p => parts.add(p));
-    }
-    const tags = Array.from(parts).slice(0, 50);
-    return generateCloud(tags, 340);
+    // Дефолтное облако когда модуль не активен - чистый запуск (пустое)
+    return generateCloud([], 340);
   }, [searchQuery, suggestions, systemLogs, shardSource, activeModule, settings.customNodes, isSearching]);
 
   // Облако для модулей
@@ -207,6 +279,25 @@ const AppContent: React.FC = () => {
 
   const toggleModule = (module: ModuleType) => {
     setActiveModule(prev => prev === module ? 'none' : module);
+  };
+  
+  // Сброс позиций облака
+  const handleResetPositions = () => {
+    positionCacheRef.current.clear();
+    localStorage.removeItem('aurawave_custom_positions');
+    // Отправляем событие для ShardCloud
+    window.dispatchEvent(new CustomEvent('resetCloudPositions'));
+    addLog('Cloud positions reset', 'info');
+  };
+  
+  // Смена раскладки облака
+  const handleChangeLayout = () => {
+    const layouts: CloudLayout[] = ['sphere', 'spiral', 'cube', 'plane', 'cylinder'];
+    const currentIndex = layouts.indexOf(currentLayout);
+    const nextLayout = layouts[(currentIndex + 1) % layouts.length];
+    updateDisplaySettings({ cloudLayout: nextLayout });
+    positionCacheRef.current.clear(); // Очищаем кеш при смене раскладки
+    addLog(`Layout: ${nextLayout}`, 'info');
   };
 
   // Конфигурация модулей для переключателя
@@ -245,6 +336,27 @@ const AppContent: React.FC = () => {
 
   const handleThemeSelect = (themeId: string) => {
     updateSettings({ themeId });
+  };
+  
+  // Обработчики для управления источниками
+  const handleDeleteNode = (node: CustomNode) => {
+    const updated = settings.customNodes.filter(n => n.name !== node.name || n.url !== node.url);
+    updateSettings({ customNodes: updated });
+    addLog(`Deleted: ${node.name}`, 'info');
+  };
+  
+  const handleEditNode = (oldNode: CustomNode, newNode: CustomNode) => {
+    const updated = settings.customNodes.map(n => 
+      (n.name === oldNode.name && n.url === oldNode.url) ? newNode : n
+    );
+    updateSettings({ customNodes: updated });
+    addLog(`Updated: ${oldNode.name} → ${newNode.name}`, 'info');
+  };
+  
+  const handleAddNode = (node: CustomNode) => {
+    const updated = [...settings.customNodes, node];
+    updateSettings({ customNodes: updated });
+    addLog(`Added: ${node.name}`, 'info');
   };
 
   // Экран инициализации
@@ -319,8 +431,8 @@ const AppContent: React.FC = () => {
               </span>
             </div>
           </div>
-          <button onClick={() => setIsRightPanelOpen(!isRightPanelOpen)} className="h-full px-5 border-l hover:bg-black/10 transition-all" style={{ borderColor: `${theme.text}11` }}>
-            <Activity size={18} />
+          <button onClick={() => setIsRightPanelOpen(!isRightPanelOpen)} className="h-full px-5 border-l hover:bg-black/10 transition-all" style={{ borderColor: `${theme.text}11` }} title="Custom Streams">
+            <Radio size={18} />
           </button>
         </div>
 
@@ -335,6 +447,8 @@ const AppContent: React.FC = () => {
             onGenreClick={handleGenreClick}
             getGenreUrl={getGenreUrl}
             theme={theme}
+            onDeleteNode={handleDeleteNode}
+            onEditNode={handleEditNode}
           />
 
           {/* Stage */}
@@ -346,14 +460,78 @@ const AppContent: React.FC = () => {
               modules={modules}
             />
 
-            {/* Background 3D Shards */}
-            <ShardCloud
-              rotation={rotation}
-              shards={mainCloudShards}
-              onShardClick={(item) => {
-                // item - это объект или строка в зависимости от модуля
-                if (activeModule === 'themes') {
-                  // item - это объект Theme {id, name, colors, layout...}
+            {/* Background 3D Shards - условно отображаем CSS или Three.js версию */}
+            {settings.display?.use3DCosmicView ? (
+              <ShardCloudThreeJS
+                rotation={rotation}
+                shards={mainCloudShards}
+                onShardClick={(item) => {
+                  console.log('🔥 Main Cloud Click - Module:', activeModule, 'Type:', typeof item, 'Data:', item);
+                  
+                  // item - это объект или строка в зависимости от модуля
+                  if (activeModule === 'themes') {
+                    // item - это объект Theme {id, name, colors, layout...}
+                    if (typeof item === 'object' && item.id) {
+                      console.log('✅ Applying theme:', item.id);
+                      updateSettings({ themeId: item.id });
+                    } else {
+                      console.log('❌ Theme object invalid:', item);
+                    }
+                  } else if (activeModule === 'nodes') {
+                    // item может быть: customNode {name, url, provider}, provider {id, name}, genre {name, url} или строка
+                    if (typeof item === 'object') {
+                      if ('url' in item && 'provider' in item) {
+                        // Это customNode
+                        handleTogglePlay(item.url, item.name, item.provider, false, {});
+                      } else if ('id' in item) {
+                        // Это provider объект - открываем поиск по его имени
+                        setSearchQuery(item.name);
+                        setActiveModule('discovery');
+                      } else if ('url' in item) {
+                        // Это genre объект с url
+                        const genreName = item.name || 'Unknown';
+                        handleTogglePlay(item.url, genreName, Provider.SOMAFM, false, {});
+                      } else if (typeof item.name === 'string') {
+                        // Объект только с name - ищем в GENRE_STREAMS
+                        const genreUrl = GENRE_STREAMS[item.name];
+                        if (genreUrl) {
+                          handleTogglePlay(genreUrl, item.name, Provider.SOMAFM, false, {});
+                        }
+                      }
+                    } else if (typeof item === 'string') {
+                      // Строковый жанр - ищем в GENRE_STREAMS
+                      const genreUrl = GENRE_STREAMS[item];
+                      if (genreUrl) {
+                        handleTogglePlay(genreUrl, item, Provider.SOMAFM, false, {});
+                      }
+                    }
+                  } else if (activeModule === 'discovery') {
+                    // item - это DiscoveredStream объект {name, url, favicon, bitrate...}
+                    if (typeof item === 'object' && 'url' in item) {
+                      handlePlayStream(item);
+                    }
+                  } else {
+                    // Дефолтное облако - строки, открываем поиск
+                    const searchTerm = typeof item === 'string' ? item : (item.name || '');
+                    setSearchQuery(searchTerm);
+                    setActiveModule('discovery');
+                    // Немедленно запускаем поиск без ожидания debounce
+                    instantSearch(searchTerm);
+                  }
+                }}
+                isDragging={isDragging}
+                onDragStart={() => setIsDragging(true)}
+                onDragEnd={() => setIsDragging(false)}
+                theme={theme}
+              />
+            ) : (
+              <ShardCloud
+                rotation={rotation}
+                shards={mainCloudShards}
+                onShardClick={(item) => {
+                  // item - это объект или строка в зависимости от модуля
+                  if (activeModule === 'themes') {
+                    // item - это объект Theme {id, name, colors, layout...}
                   if (typeof item === 'object' && item.id) {
                     updateSettings({ themeId: item.id });
                   }
@@ -398,12 +576,13 @@ const AppContent: React.FC = () => {
                   // Немедленно запускаем поиск без ожидания debounce
                   instantSearch(searchTerm);
                 }
-              }}
-              isDragging={isDragging}
-              onDragStart={() => setIsDragging(true)}
-              onDragEnd={() => setIsDragging(false)}
-              theme={theme}
-            />
+                }}
+                isDragging={isDragging}
+                onDragStart={() => setIsDragging(true)}
+                onDragEnd={() => setIsDragging(false)}
+                theme={theme}
+              />
+            )}
 
             {/* Discovery поиск - показывается только для модуля discovery */}
             {activeModule === 'discovery' && (
@@ -422,10 +601,15 @@ const AppContent: React.FC = () => {
             )}
           </div>
 
-          {/* Logs Drawer */}
+          {/* Right Panel - Custom Streams */}
           <RightPanel
             isOpen={isRightPanelOpen}
-            systemLogs={systemLogs}
+            customNodes={settings.customNodes}
+            currentGenre={audioState.currentGenre}
+            onGenreClick={handleGenreClick}
+            onEditNode={handleEditNode}
+            onDeleteNode={handleDeleteNode}
+            onAddNode={handleAddNode}
             theme={theme}
           />
         </div>
@@ -445,6 +629,9 @@ const AppContent: React.FC = () => {
               onNext={handleNext}
               onPrev={handlePrev}
               onToggleShuffle={() => setIsShuffleMode(!isShuffleMode)}
+              onResetPositions={handleResetPositions}
+              onChangeLayout={handleChangeLayout}
+              currentLayout={currentLayout}
             />
             <div className="text-[7px] font-black uppercase opacity-5 tracking-[1em]">
               SYSTEM_STABLE // v2.7.0_CORE

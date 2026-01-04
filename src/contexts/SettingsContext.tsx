@@ -48,6 +48,7 @@ const DEFAULT_SETTINGS: AppSettings = {
     randomColors: false,
     animationSpeed: 'normal',
     borderStyle: 'gradient',
+    use3DCosmicView: true, // Новая опция для переключения между CSS 3D и Three.js
     spacing: 'normal'
   },
   moduleCustomizations: []
