@@ -223,61 +223,26 @@ const AppContent: React.FC = () => {
     return Array.from(new Set([...parts, searchQuery.toUpperCase()])).slice(0, 15);
   }, [metadata, searchQuery]);
 
-  // Кеш для discoveryItems чтобы избежать пересоздания массива
-  const discoveryItemsCacheRef = useRef<any[]>([]);
-  const discoveryItemsHashRef = useRef<string>('');
-  
-  // Кеш для nodesItems
-  const nodesItemsCacheRef = useRef<any[]>([]);
-  const nodesItemsHashRef = useRef<string>('');
-
-  // Стабильные массивы для каждого модуля (мемоизация предотвращает ненужные пересоздания)
+  // КОНСТАНТЫ как в Themes - не пересоздаются НИКОГДА!
   const discoveryItems = useMemo(() => {
-    // Создаем хеш текущего состояния
-    const currentHash = suggestions.length > 0 
-      ? suggestions.slice(0, 40).map(s => `${s.url}|${s.name}`).join('::')
-      : `query:${searchQuery}`;
-    
-    // Если хеш не изменился - возвращаем закешированный массив
-    if (currentHash === discoveryItemsHashRef.current) {
-      return discoveryItemsCacheRef.current;
-    }
-    
-    // Хеш изменился - создаем новый массив и кешируем
-    discoveryItemsHashRef.current = currentHash;
-    const newItems = suggestions.length > 0 
+    return suggestions.length > 0 
       ? suggestions.slice(0, 40)
       : [searchQuery.toUpperCase() || 'SEARCH'];
-    discoveryItemsCacheRef.current = newItems;
-    return newItems;
   }, [suggestions, searchQuery]);
 
   const nodesItems = useMemo(() => {
-    // Создаем хеш текущего состояния
-    const customNodesHash = settings.customNodes.map(n => `${n.url}|${n.name}`).join('::');
-    const providersHash = PROVIDERS.map(p => p.id).join('::');
-    const genresHash = PROVIDERS.flatMap(p => (GENRES_BY_PROVIDER[p.id as Provider] || []).map((g: any) => typeof g === 'string' ? g : g.name)).join('::');
-    const currentHash = `${customNodesHash}||${providersHash}||${genresHash}`;
-    
-    // Если хеш не изменился - возвращаем закешированный массив
-    if (currentHash === nodesItemsHashRef.current) {
-      return nodesItemsCacheRef.current;
-    }
-    
-    // Хеш изменился - создаем новый массив
-    nodesItemsHashRef.current = currentHash;
-    const newItems = [
+    return [
       ...settings.customNodes,
       ...PROVIDERS,
       ...PROVIDERS.flatMap(p => GENRES_BY_PROVIDER[p.id as Provider] || [])
     ].slice(0, 45);
-    nodesItemsCacheRef.current = newItems;
-    return newItems;
   }, [settings.customNodes]);
 
   const modelsItems = useMemo(() => {
     return BUILT_IN_MODELS;
   }, []); // Константа, не зависит от изменений
+  
+  const themesItems = THEMES; // Прямая константа
 
   // Фоновое облако - переключается в зависимости от активного модуля
   const mainCloudShards = useMemo(() => {
@@ -288,14 +253,14 @@ const AppContent: React.FC = () => {
       return generateCloud(nodesItems, 340);
     } else if (activeModule === 'themes') {
       // THEMES - константа, не требует мемоизации
-      return generateCloud(THEMES, 340);
+      return generateCloud(themesItems, 340);
     } else if (activeModule === 'models') {
       return generateCloud(modelsItems, 340);
     }
     
     // Дефолтное облако когда модуль не активен - чистый запуск (пустое)
     return generateCloud([], 340);
-  }, [activeModule, discoveryItems, nodesItems, generateCloud]);
+  }, [activeModule, discoveryItems, nodesItems, themesItems, generateCloud, modelsItems]);
 
   // Облако для модулей (используем те же стабильные массивы)
   const moduleCloudItems = useMemo(() => {
@@ -305,7 +270,7 @@ const AppContent: React.FC = () => {
       case 'nodes':
         return generateCloud(nodesItems, 280);
       case 'themes':
-        return generateCloud(THEMES, 240);
+        return generateCloud(themesItems, 240);
       case 'models':
         return generateCloud(modelsItems, 280);
       case 'intel':
