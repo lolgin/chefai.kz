@@ -242,6 +242,17 @@ const AppContent: React.FC = () => {
     } else if (activeModule === 'themes') {
       // Для themes - полные объекты с name, colors, layout
       return generateCloud(THEMES, 340);
+    } else if (activeModule === 'display') {
+      // Для display - провайдеры визуализации
+      const vizProviders = [
+        { id: 'threejs-planets', name: 'Cosmic Planets' },
+        { id: 'threejs-galaxy', name: 'Spiral Galaxy' },
+        { id: 'threejs-nebula', name: 'Nebula Cloud' },
+        { id: 'css3d-cloud', name: 'Classic Cloud' },
+        { id: 'css3d-helix', name: 'DNA Helix' },
+        { id: 'd3-force', name: 'Force Graph' }
+      ];
+      return generateCloud(vizProviders, 340);
     }
     
     // Дефолтное облако когда модуль не активен - чистый запуск (пустое)
@@ -258,6 +269,16 @@ const AppContent: React.FC = () => {
         return generateCloud(nodeList.slice(0, 45), 280);
       case 'themes':
         return generateCloud(THEMES, 240);
+      case 'display':
+        const vizProviders = [
+          { id: 'threejs-planets', name: 'Cosmic Planets' },
+          { id: 'threejs-galaxy', name: 'Spiral Galaxy' },
+          { id: 'threejs-nebula', name: 'Nebula Cloud' },
+          { id: 'css3d-cloud', name: 'Classic Cloud' },
+          { id: 'css3d-helix', name: 'DNA Helix' },
+          { id: 'd3-force', name: 'Force Graph' }
+        ];
+        return generateCloud(vizProviders, 240);
       case 'intel':
         const intelPool = ['LATENCY: 42ms', 'NODES: 12', 'UPTIME: 100%', 'ENCRYPTION: AES-256', 'SIGNAL: STABLE', ...systemLogs.map(l => l.msg)];
         return generateCloud(intelPool, 260);
@@ -537,6 +558,12 @@ const AppContent: React.FC = () => {
                   if (typeof item === 'object' && item.id) {
                     updateSettings({ themeId: item.id });
                   }
+                } else if (activeModule === 'display') {
+                  // item - это провайдер визуализации {id, name}
+                  if (typeof item === 'object' && item.id) {
+                    console.log('✅ Switching visualization provider:', item.id);
+                    updateDisplaySettings({ visualizationProvider: item.id });
+                  }
                 } else if (activeModule === 'nodes') {
                   // item может быть: customNode {name, url, provider}, provider {id, name}, genre {name, url} или строка
                   if (typeof item === 'object') {
@@ -602,26 +629,19 @@ const AppContent: React.FC = () => {
               </div>
             )}
             
-            {/* Модули - рендерятся как оверлеи */}
-            {activeModule === 'display' && (
-              <div className="absolute inset-0 flex items-center justify-center z-50 pointer-events-none">
-                <div className="pointer-events-auto w-full max-w-4xl max-h-[80vh] overflow-y-auto bg-black/90 backdrop-blur-2xl rounded-3xl border-2 shadow-2xl"
-                     style={{ borderColor: `${theme.accent}40` }}>
-                  <DisplayModule
-                    displaySettings={settings.displaySettings || {
-                      fontSize: 'lg',
-                      iconSize: 'lg',
-                      compactMode: false,
-                      glassEffect: true,
-                      randomColors: false,
-                      animationSpeed: 'normal',
-                      borderStyle: 'gradient',
-                      spacing: 'normal'
-                    }}
-                    onUpdate={(updates) => updateDisplaySettings(updates)}
-                  />
-                </div>
-              </div>
+            {/* Кнопка закрытия модуля */}
+            {activeModule !== 'none' && (
+              <button
+                onClick={() => setActiveModule('none')}
+                className="absolute top-6 right-6 z-50 p-3 rounded-full backdrop-blur-xl transition-all hover:scale-110"
+                style={{
+                  backgroundColor: theme.surface,
+                  color: theme.text,
+                  border: `2px solid ${theme.accent}40`
+                }}
+              >
+                <X size={20} />
+              </button>
             )}
           </div>
 
