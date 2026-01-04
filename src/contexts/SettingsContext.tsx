@@ -49,12 +49,21 @@ const DEFAULT_SETTINGS: AppSettings = {
     animationSpeed: 'normal',
     borderStyle: 'gradient',
     use3DCosmicView: true, // Новая опция для переключения между CSS 3D и Three.js
-    spacing: 'normal'
+    spacing: 'normal',
+    cloudSettings: {
+      viewMode: 'cloud',
+      cloudScale: 1.0,
+      rotationSpeed: 1.0,
+      showConnections: false,
+      connectionStyle: 'threads',
+      sortBy: 'popularity',
+      filterTags: []
+    }
   },
   moduleCustomizations: []
 };
 
-const STORAGE_KEY = 'aurawave_v28_settings';
+const STORAGE_KEY = 'aurawave_v29_settings';
 
 export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [settings, setSettings] = useState<AppSettings>(() => {
