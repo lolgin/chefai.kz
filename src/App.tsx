@@ -242,22 +242,11 @@ const AppContent: React.FC = () => {
     } else if (activeModule === 'themes') {
       // Для themes - полные объекты с name, colors, layout
       return generateCloud(THEMES, 340);
-    } else if (activeModule === 'display') {
-      // Для display - провайдеры визуализации
-      const vizProviders = [
-        { id: 'threejs-planets', name: 'Cosmic Planets' },
-        { id: 'threejs-galaxy', name: 'Spiral Galaxy' },
-        { id: 'threejs-nebula', name: 'Nebula Cloud' },
-        { id: 'css3d-cloud', name: 'Classic Cloud' },
-        { id: 'css3d-helix', name: 'DNA Helix' },
-        { id: 'd3-force', name: 'Force Graph' }
-      ];
-      return generateCloud(vizProviders, 340);
     }
     
     // Дефолтное облако когда модуль не активен - чистый запуск (пустое)
     return generateCloud([], 340);
-  }, [searchQuery, suggestions, systemLogs, shardSource, activeModule, settings.customNodes, isSearching]);
+  }, [searchQuery, suggestions, activeModule, settings.customNodes, generateCloud]);
 
   // Облако для модулей
   const moduleCloudItems = useMemo(() => {
