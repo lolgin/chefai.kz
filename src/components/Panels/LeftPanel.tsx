@@ -49,6 +49,7 @@ export const LeftPanel: React.FC<LeftPanelProps> = ({
   const [contextMenuNode, setContextMenuNode] = useState<CustomNode | null>(null);
   const [longPressTimer, setLongPressTimer] = useState<NodeJS.Timeout | null>(null);
   const contextMenuRef = useRef<HTMLDivElement>(null);
+  const engineDropdownRef = useRef<HTMLDivElement>(null);
   
   // Закрытие контекстного меню при клике вне его
   useEffect(() => {
@@ -63,6 +64,20 @@ export const LeftPanel: React.FC<LeftPanelProps> = ({
       return () => document.removeEventListener('mousedown', handleClickOutside);
     }
   }, [contextMenuNode]);
+  
+  // Закрытие dropdown движков при клике ВНЕ его
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (engineDropdownRef.current && !engineDropdownRef.current.contains(event.target as Node)) {
+        setIsEngineDropdownOpen(false);
+      }
+    };
+    
+    if (isEngineDropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [isEngineDropdownOpen]);
   
   const handleStartEdit = (node: CustomNode) => {
     setEditingNode(node);
@@ -117,7 +132,7 @@ export const LeftPanel: React.FC<LeftPanelProps> = ({
         </h3>
         
         {/* Dropdown для выбора движка рендеринга */}
-        <div className="relative">
+        <div className="relative" ref={engineDropdownRef}>
           <button
             onClick={() => setIsEngineDropdownOpen(!isEngineDropdownOpen)}
             className="w-full flex items-center justify-between px-6 py-5 rounded-xl bg-black/20 hover:bg-black/30 transition-all border-2"
@@ -148,6 +163,7 @@ export const LeftPanel: React.FC<LeftPanelProps> = ({
             <div 
               className="absolute top-full left-0 right-0 mt-1 py-1 rounded-lg bg-black/95 backdrop-blur-xl border shadow-xl z-50 max-h-80 overflow-y-auto"
               style={{ borderColor: `${theme.text}22` }}
+              onClick={(e) => e.stopPropagation()} // Не закрывать при клике внутри
             >
               {RENDER_ENGINES.map(engine => {
                 const isActive = currentEngine === engine.id;
