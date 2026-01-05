@@ -79,7 +79,7 @@ export const ShardCloudThreeJS: React.FC<ShardCloudThreeJSProps> = ({
       0.1,
       5000
     );
-    camera.position.z = 800;
+    camera.position.z = 1200; // Увеличили с 800 до 1200 - камера дальше
     cameraRef.current = camera;
 
     // Renderer

@@ -124,8 +124,12 @@ export const LeftPanel: React.FC<LeftPanelProps> = ({
     <div
       className="hidden lg:flex transition-all duration-500 border-r bg-black/5 flex-col overflow-hidden"
       style={{ borderColor: `${theme.text}11`, width: isOpen ? '480px' : '0' }}
+      onWheel={(e) => e.stopPropagation()} // Изолируем скролл панели
     >
-      <div className="p-10 w-[480px] h-full overflow-y-auto no-scrollbar space-y-10">
+      <div 
+        className="p-10 w-[480px] h-full overflow-y-auto no-scrollbar space-y-10"
+        onWheel={(e) => e.stopPropagation()} // Изолируем скролл списка
+      >
         <h3 className="text-[24px] font-black uppercase tracking-widest flex items-center gap-5"
             style={{ color: theme.text }}>
           <Hexagon size={32} /> NEURAL_CORE

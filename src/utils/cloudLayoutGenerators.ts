@@ -31,7 +31,7 @@ export const generateSpherePositions: CloudLayoutGenerator = (items, radius = 30
       data: item,
       x: radius * Math.cos(theta) * Math.sin(phi),
       y: radius * Math.sin(theta) * Math.sin(phi),
-      z: radius * Math.cos(phi),
+      z: radius * Math.cos(phi) * 0.4, // Уменьшили глубину в 2.5 раза
       size: 0.7 + Math.random() * 0.6
     };
   });
@@ -50,12 +50,12 @@ export const generateCubePositions: CloudLayoutGenerator = (items, size = 300) =
     
     let x = 0, y = 0, z = 0;
     switch(face) {
-      case 0: x = half; y = u; z = v; break;   // правая грань
-      case 1: x = -half; y = u; z = v; break;  // левая грань
-      case 2: y = half; x = u; z = v; break;   // верхняя грань
-      case 3: y = -half; x = u; z = v; break;  // нижняя грань
-      case 4: z = half; x = u; y = v; break;   // передняя грань
-      case 5: z = -half; x = u; y = v; break;  // задняя грань
+      case 0: x = half; y = u; z = v * 0.4; break;   // правая грань
+      case 1: x = -half; y = u; z = v * 0.4; break;  // левая грань
+      case 2: y = half; x = u; z = v * 0.4; break;   // верхняя грань
+      case 3: y = -half; x = u; z = v * 0.4; break;  // нижняя грань
+      case 4: z = half * 0.4; x = u; y = v; break;   // передняя грань
+      case 5: z = -half * 0.4; x = u; y = v; break;  // задняя грань
     }
     
     return {
@@ -81,7 +81,7 @@ export const generateSpiralPositions: CloudLayoutGenerator = (items, radius = 30
       data: item,
       x: r * Math.cos(angle),
       y: height,
-      z: r * Math.sin(angle),
+      z: r * Math.sin(angle) * 0.4, // Уменьшили глубину
       size: 0.7 + Math.random() * 0.6
     };
   });
@@ -103,7 +103,7 @@ export const generateGridPositions: CloudLayoutGenerator = (items, spacing = 100
       data: item,
       x: col * spacing - offset,
       y: row * spacing - offset,
-      z: (Math.random() - 0.5) * 100, // небольшая вариация по глубине
+      z: (Math.random() - 0.5) * 40, // Уменьшили глубину с 100 до 40
       size: 0.7 + Math.random() * 0.6
     };
   });
@@ -121,7 +121,7 @@ export const generateWavePositions: CloudLayoutGenerator = (items, amplitude = 3
     const col = i % cols;
     const row = Math.floor(i / cols);
     const x = col * spacing - amplitude;
-    const z = row * spacing - amplitude;
+    const z = (row * spacing - amplitude) * 0.4; // Уменьшили глубину
     
     // Синусоидальная волна
     const y = Math.sin(x / 50) * 80 + Math.cos(z / 50) * 80;
