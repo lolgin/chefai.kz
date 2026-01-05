@@ -206,7 +206,11 @@ const AppContent: React.FC = () => {
     setSuggestions,
     purgeBadSignals: originalPurge,
     instantSearch
-  } = useStreamDiscovery({ isInitialized, onLog: addLog });
+  } = useStreamDiscovery({ 
+    isInitialized, 
+    onLog: addLog,
+    blacklistedUrls: (settings.blacklistedStreams || []).map(b => b.url)
+  });
 
   const {
     audioState,
@@ -241,6 +245,19 @@ const AppContent: React.FC = () => {
 
   // Анимация 3D вращения
   // Автовращение отключено - только ручное управление мышью
+
+  // Обработчик события для добавления слова в поиск (Shift+Click на тег)
+  useEffect(() => {
+    const handleAppendSearch = (e: CustomEvent) => {
+      const newQuery = e.detail.query;
+      setSearchQuery(newQuery);
+      setActiveModule('discovery');
+      instantSearch(newQuery);
+    };
+    
+    window.addEventListener('appendSearchQuery', handleAppendSearch as EventListener);
+    return () => window.removeEventListener('appendSearchQuery', handleAppendSearch as EventListener);
+  }, []);
 
   // КЕШ позиций - чтобы объекты не прыгали при изменении списка
   const positionCacheRef = useRef<Map<string, { x: number; y: number; z: number; size: number }>>(new Map());
@@ -539,7 +556,7 @@ const AppContent: React.FC = () => {
         const url = item.url || item.streamUrl || item.url_resolved;
         if (url) {
           addToBlacklist(url, 'user_ban');
-          addLog(`Banned: ${itemName}`, 'warning');
+          addLog(`Banned: ${itemName}`, 'warn');
         }
       }
     }
@@ -572,7 +589,7 @@ const AppContent: React.FC = () => {
     const url = item.url || item.streamUrl || item.url_resolved;
     if (url) {
       addToBlacklist(url, 'user_ban');
-      addLog(`Banned: ${item.name || url}`, 'warning');
+      addLog(`Banned: ${item.name || url}`, 'warn');
     }
   };
   
@@ -582,12 +599,6 @@ const AppContent: React.FC = () => {
     // Сохраняем seed в settings для использования в цветовой генерации
     updateDisplaySettings({ colorSeed: randomSeed });
     addLog(`Colors randomized (seed: ${randomSeed})`, 'info');
-  };
-  
-  const handleRandomizeColors = () => {
-    const newSeed = Math.floor(Math.random() * 360);
-    updateDisplaySettings({ colorSeed: newSeed });
-    addLog(`Colors: ${newSeed}`, 'info');
   };
   
   // Сброс позиций облака

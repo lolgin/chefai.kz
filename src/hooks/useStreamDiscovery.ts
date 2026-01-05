@@ -11,15 +11,14 @@
 
 import { useState, useEffect } from 'react';
 import { searchStreams, DiscoveredStream } from '../services/streamDiscovery';
-import { useSettings } from '../contexts/SettingsContext';
 
 interface UseStreamDiscoveryOptions {
   isInitialized: boolean;
   onLog?: (msg: string, type: 'info' | 'warn' | 'zap' | 'error') => void;
+  blacklistedUrls?: string[];
 }
 
-export const useStreamDiscovery = ({ isInitialized, onLog }: UseStreamDiscoveryOptions) => {
-  const { isBlacklisted } = useSettings();
+export const useStreamDiscovery = ({ isInitialized, onLog, blacklistedUrls = [] }: UseStreamDiscoveryOptions) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
   const [suggestions, setSuggestions] = useState<DiscoveredStream[]>([]);
@@ -37,15 +36,11 @@ export const useStreamDiscovery = ({ isInitialized, onLog }: UseStreamDiscoveryO
       
       try {
         const results = await searchStreams(searchQuery);
-        // Фильтруем черный список
-        const filtered = results.filter(stream => {
-          const url = stream.url || stream.url_resolved;
-          return url && !isBlacklisted(url);
-        });
+        // Фильтруем по черному списку
+        const filtered = results.filter(stream => 
+          !blacklistedUrls.includes(stream.url || stream.streamUrl || stream.url_resolved || '')
+        );
         setSuggestions(filtered);
-        if (filtered.length < results.length) {
-          onLog?.(`Filtered ${results.length - filtered.length} blacklisted`, 'warn');
-        }
       } catch (e) {
         onLog?.('Sync Interrupted', 'error');
       } finally {

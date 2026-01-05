@@ -317,9 +317,9 @@ export const ShardCloudThreeJS: React.FC<ShardCloudThreeJSProps> = ({
         labelDiv.setAttribute('data-item', JSON.stringify(shard.data));
         labelDiv.style.cssText = `
           color: rgba(255, 255, 255, 0.95);
-          font-size: ${Math.max(8, shard.size * 5)}px;
+          font-size: ${Math.max(10, shard.size * 6)}px;
           font-weight: 700;
-          text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+          text-shadow: 1px 1px 0 rgba(0,0,0,0.8), 2px 2px 0 rgba(0,0,0,0.6), 3px 3px 0 rgba(0,0,0,0.4);
           padding: 0;
           background: none;
           border: none;
@@ -328,9 +328,24 @@ export const ShardCloudThreeJS: React.FC<ShardCloudThreeJSProps> = ({
           user-select: none;
           cursor: pointer;
           letter-spacing: 0.08em;
-          text-transform: uppercase;
+          transform-style: preserve-3d;
         `;
         labelDiv.textContent = labelText;
+        
+        // Добавить onclick для поиска по слову
+        labelDiv.addEventListener('click', (e) => {
+          e.stopPropagation();
+          if (e.shiftKey || e.ctrlKey) {
+            // Добавить слово к существующему поиску
+            const currentQuery = (document.querySelector('input[type="search"]') as HTMLInputElement)?.value || '';
+            const words = currentQuery.split(' ').filter(w => w.trim());
+            if (!words.includes(labelText)) {
+              words.push(labelText);
+              const newQuery = words.join(' ');
+              window.dispatchEvent(new CustomEvent('appendSearchQuery', { detail: { query: newQuery } }));
+            }
+          }
+        });
 
         const labelObject = new CSS3DObject(labelDiv);
         labelObject.position.set(x, y + radius + 8, z); // Ближе к сфере
