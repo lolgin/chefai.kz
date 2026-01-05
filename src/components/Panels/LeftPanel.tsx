@@ -85,7 +85,7 @@ export const LeftPanel: React.FC<LeftPanelProps> = ({
     setEditingNode(node);
     setEditName(node.name);
     setEditUrl(node.url);
-    setContextMenuNode(null);
+    setContextMenuNode(null); // Закрываем меню
   };
   
   const handleSaveEdit = () => {
@@ -386,6 +386,29 @@ export const LeftPanel: React.FC<LeftPanelProps> = ({
                           style={{ color: theme.text }}
                         >
                           <Trash2 size={13} /> {isCustom ? 'УДАЛИТЬ' : 'КОПИРОВАТЬ'}
+                        </button>
+                        {!isCustom && (
+                          <button
+                            onClick={() => {
+                              if (confirm(`Удалить поток "${node.name}" из списка?`)) {
+                                // Для встроенных потоков просто скрываем (можно реализовать blacklist)
+                                setContextMenuNode(null);
+                                // TODO: Добавить в blacklist если нужно постоянное скрытие
+                              }
+                            }}
+                            className="w-full flex items-center gap-2 px-3 py-2 text-[10px] font-bold uppercase rounded hover:bg-red-500/40 transition-all"
+                            style={{ color: theme.text }}
+                          >
+                            <Trash2 size={13} /> УДАЛИТЬ
+                          </button>
+                        )}
+                        <div className="border-t border-white/10 my-1" />
+                        <button
+                          onClick={() => setContextMenuNode(null)}
+                          className="w-full flex items-center gap-2 px-3 py-2 text-[10px] font-bold uppercase rounded hover:bg-white/10 transition-all"
+                          style={{ color: theme.text, opacity: 0.6 }}
+                        >
+                          <X size={13} /> ЗАКРЫТЬ
                         </button>
                       </div>
                     )}
