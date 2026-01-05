@@ -2,9 +2,17 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { Genre, TrackMetadata } from "../types";
 
+// API Key из переменных окружения
+const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY || '';
+
 // Moved instantiation inside the function to ensure the most up-to-date API key is used per call
 export const generateTrackMetadata = async (genre: string, provider: string): Promise<TrackMetadata> => {
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  if (!GEMINI_API_KEY) {
+    console.warn("⚠️ Gemini API key not found, using fallback metadata");
+    return getFallbackMetadata(genre);
+  }
+  
+  const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
   try {
     const response = await ai.models.generateContent({
       model: 'gemini-3-flash-preview',
@@ -40,14 +48,19 @@ export const generateTrackMetadata = async (genre: string, provider: string): Pr
       description: data.description || "Neural link established."
     };
   } catch (e) {
-    console.warn("Gemini synthesis offline, using fallback.");
-    return {
-      title: genre.toUpperCase(),
-      artist: "Neural Relay",
-      bpm: 90,
-      mood: "Steady",
-      energy: 0.5,
-      description: "Fallback frequency active."
-    };
+    console.warn("⚠️ Gemini synthesis offline, using fallback:", e);
+    return getFallbackMetadata(genre);
   }
 };
+
+// Fallback метаданные
+function getFallbackMetadata(genre: string): TrackMetadata {
+  return {
+    title: genre.toUpperCase(),
+    artist: "Neural Relay",
+    bpm: 90,
+    mood: "Steady",
+    energy: 0.5,
+    description: "Fallback frequency active."
+  };
+}

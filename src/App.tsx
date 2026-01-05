@@ -47,7 +47,6 @@ import { PlayerControls } from './components/Player/PlayerControls';
 import { VolumeControl } from './components/Player/VolumeControl';
 import { TrackInfo } from './components/Player/TrackInfo';
 import { LeftPanel } from './components/Panels/LeftPanel';
-import { RightPanel } from './components/Panels/RightPanel';
 import { ModuleSwitcher, ModuleType } from './components/Panels/ModuleSwitcher';
 import { DraggableElement } from './components/UI/DraggableElement';
 import { ShardCloud } from './components/Background/ShardCloud';
@@ -56,6 +55,7 @@ import { DiscoveryModule } from './components/Modules/DiscoveryModule';
 import { NodesModule } from './components/Modules/NodesModule';
 import { ThemesModule } from './components/Modules/ThemesModule';
 import { ModelsModule } from './components/Modules/ModelsModule';
+import { EngineModule } from './components/Modules/EngineModule';
 
 // Сервисы и константы
 import { audioEngine } from './services/audioEngine';
@@ -65,17 +65,36 @@ import { Provider, CloudLayout, CustomNode } from './types';
 import { DiscoveredStream } from './services/streamDiscovery';
 import { getAllVisualizationProviders, VisualizationProvider } from './services/visualizationProviders';
 import { RenderEngine, RENDER_ENGINES } from './constants/renderEngines';
+import { TagContextMenu } from './components/UI/TagContextMenu';
 
 // Основной компонент приложения с контекстами
 const AppContent: React.FC = () => {
   const [isInitialized, setIsInitialized] = useState(false);
   const [activeModule, setActiveModule] = useState<ModuleType>('none');
   const [isLeftPanelOpen, setIsLeftPanelOpen] = useState(false);
-  const [isRightPanelOpen, setIsRightPanelOpen] = useState(false);
+  const [leftPanelWidth, setLeftPanelWidth] = useState(320);
+  const [isResizing, setIsResizing] = useState(false);
   const [isShuffleMode, setIsShuffleMode] = useState(false);
   const [isTestingSignals, setIsTestingSignals] = useState(false);
   const [isEngineDropdownOpen, setIsEngineDropdownOpen] = useState(false);
-  const [isLayoutEditMode, setIsLayoutEditMode] = useState(false);
+  const [showStreamIcons, setShowStreamIcons] = useState(true);
+  
+  // Контекстное меню для тегов
+  const [contextMenu, setContextMenu] = useState<{
+    visible: boolean;
+    position: { x: number; y: number };
+    item: any;
+  }>({ visible: false, position: { x: 0, y: 0 }, item: null });
+  const [longPressTimer, setLongPressTimer] = useState<NodeJS.Timeout | null>(null);
+  
+  // Диалог редактирования
+  const [editDialog, setEditDialog] = useState<{
+    visible: boolean;
+    position: { x: number; y: number };
+    item: any;
+    name: string;
+    url: string;
+  }>({ visible: false, position: { x: 0, y: 0 }, item: null, name: '', url: '' });
   
   // 3D вращение
   const [rotation, setRotation] = useState({ x: 0, y: 0 });
@@ -83,11 +102,96 @@ const AppContent: React.FC = () => {
   const [isDragging, setIsDragging] = useState(false);
   const [shardSource] = useState<'scan' | 'trace' | 'hyper'>('scan');
 
+  // Resize панели
+  const handleResizeStart = useCallback(() => {
+    setIsResizing(true);
+  }, []);
+
+  const handleResizeMove = useCallback((e: MouseEvent) => {
+    if (isResizing) {
+      const newWidth = Math.max(250, Math.min(600, e.clientX));
+      setLeftPanelWidth(newWidth);
+    }
+  }, [isResizing]);
+
+  const handleResizeEnd = useCallback(() => {
+    setIsResizing(false);
+  }, []);
+
+  useEffect(() => {
+    if (isResizing) {
+      document.addEventListener('mousemove', handleResizeMove);
+      document.addEventListener('mouseup', handleResizeEnd);
+      return () => {
+        document.removeEventListener('mousemove', handleResizeMove);
+        document.removeEventListener('mouseup', handleResizeEnd);
+      };
+    }
+  }, [isResizing, handleResizeMove, handleResizeEnd]);
+  
+  // Глобальный обработчик долгого нажатия для всех тегов
+  useEffect(() => {
+    let timer: NodeJS.Timeout | null = null;
+    let currentItem: any = null;
+
+    const handlePointerDown = (e: PointerEvent) => {
+      const target = e.target as HTMLElement;
+      // Проверяем что это тег облака
+      if (target.classList.contains('shard-label') || target.closest('.shard-label')) {
+        const labelEl = target.classList.contains('shard-label') ? target : target.closest('.shard-label') as HTMLElement;
+        
+        // Получаем данные элемента из data-атрибута
+        const dataStr = labelEl?.getAttribute('data-item');
+        if (dataStr) {
+          try {
+            currentItem = JSON.parse(dataStr);
+            
+            timer = setTimeout(() => {
+              if (currentItem) {
+                handleTagLongPress(currentItem, e);
+              }
+            }, 2000); // 2 секунды
+          } catch (err) {
+            console.error('Failed to parse item data:', err);
+          }
+        }
+      }
+    };
+
+    const handlePointerUp = () => {
+      if (timer) {
+        clearTimeout(timer);
+        timer = null;
+      }
+      currentItem = null;
+    };
+
+    const handlePointerMove = (e: PointerEvent) => {
+      // Если мышь двигается - отменяем долгое нажатие
+      if (timer && currentItem) {
+        clearTimeout(timer);
+        timer = null;
+      }
+    };
+
+    document.addEventListener('pointerdown', handlePointerDown);
+    document.addEventListener('pointerup', handlePointerUp);
+    document.addEventListener('pointercancel', handlePointerUp);
+    document.addEventListener('pointermove', handlePointerMove);
+
+    return () => {
+      if (timer) clearTimeout(timer);
+      document.removeEventListener('pointerdown', handlePointerDown);
+      document.removeEventListener('pointerup', handlePointerUp);
+      document.removeEventListener('pointercancel', handlePointerUp);
+      document.removeEventListener('pointermove', handlePointerMove);
+    };
+  }, [activeModule]);
+
   // Используем хуки и контексты
   const { systemLogs, addLog } = useSystemLogs();
   const { settings, theme, updateSettings, updateDisplaySettings } = useSettings();
   const { metadata, statusMessage, updateMetadata, fetchAIMetadata } = useMetadata();
-  const { layouts, resetLayout, editMode, setEditMode } = useLayout();
   
   const {
     searchQuery,
@@ -280,11 +384,36 @@ const AppContent: React.FC = () => {
       return generateCloud(themesItems, 340);
     } else if (activeModule === 'models') {
       return generateCloud(modelsItems, 340);
+    } else if (activeModule === 'streams') {
+      // Для streams показываем все потоки из провайдеров + custom nodes
+      const allStreams: any[] = [];
+      PROVIDERS.forEach(provider => {
+        const genres = GENRES_BY_PROVIDER[provider.id] || [];
+        genres.forEach(genre => {
+          allStreams.push({
+            name: genre,
+            url: GENRE_STREAMS[genre],
+            provider: provider.id,
+            providerName: provider.name
+          });
+        });
+      });
+      // Добавляем custom nodes
+      settings.customNodes.forEach(node => {
+        allStreams.push(node);
+      });
+      return generateCloud(allStreams, 340);
+    } else if (activeModule === 'engine') {
+      // Для engine показываем список движков (только доступные)
+      const availableEngines = RENDER_ENGINES.filter(e => 
+        e.id === RenderEngine.CSS3D || e.id === RenderEngine.THREEJS
+      );
+      return generateCloud(availableEngines, 340);
     }
     
     // Дефолтное облако когда модуль не активен - чистый запуск (пустое)
     return generateCloud([], 340);
-  }, [activeModule, discoveryItems, nodesItems, themesItems, generateCloud, modelsItems]);
+  }, [activeModule, discoveryItems, nodesItems, themesItems, generateCloud, modelsItems, settings.customNodes]);
 
   // Облако для модулей (используем те же стабильные массивы)
   const moduleCloudItems = useMemo(() => {
@@ -321,6 +450,96 @@ const AppContent: React.FC = () => {
     setActiveModule(prev => prev === module ? 'none' : module);
   };
   
+  // Обработчики контекстного меню для тегов
+  const handleTagLongPress = (item: any, event: MouseEvent | TouchEvent) => {
+    const x = 'touches' in event ? event.touches[0].clientX : event.clientX;
+    const y = 'touches' in event ? event.touches[0].clientY : event.clientY;
+    
+    setContextMenu({
+      visible: true,
+      position: { x, y },
+      item
+    });
+  };
+
+  const handleSaveToStreams = (item: any) => {
+    // Сохраняем элемент в custom nodes
+    const newNode: CustomNode = {
+      id: `custom_${Date.now()}`,
+      name: item.name || item.title || String(item.id || 'Unknown'),
+      url: item.url || item.streamUrl || item.url_resolved || '',
+      provider: Provider.CUSTOM
+    };
+    
+    if (!newNode.url) {
+      addLog('Error: No URL found', 'error');
+      return;
+    }
+    
+    const updatedNodes = [...settings.customNodes, newNode];
+    updateSettings({ customNodes: updatedNodes });
+    addLog(`Saved: ${newNode.name}`, 'info');
+  };
+
+  const handleEditItem = (item: any) => {
+    // Открываем диалог редактирования
+    setEditDialog({
+      visible: true,
+      position: contextMenu.position,
+      item: item,
+      name: item.name || item.title || '',
+      url: item.url || item.streamUrl || item.url_resolved || ''
+    });
+    setContextMenu({ visible: false, position: { x: 0, y: 0 }, item: null });
+  };
+  
+  const handleSaveEdit = () => {
+    if (!editDialog.item) return;
+    
+    // Обновляем или создаем custom node
+    const updatedNode: CustomNode = {
+      id: editDialog.item.id || `custom_${Date.now()}`,
+      name: editDialog.name,
+      url: editDialog.url,
+      provider: Provider.CUSTOM
+    };
+    
+    const existingIndex = settings.customNodes.findIndex(n => n.id === updatedNode.id);
+    let updatedNodes;
+    
+    if (existingIndex >= 0) {
+      // Обновляем существующий
+      updatedNodes = [...settings.customNodes];
+      updatedNodes[existingIndex] = updatedNode;
+    } else {
+      // Добавляем новый
+      updatedNodes = [...settings.customNodes, updatedNode];
+    }
+    
+    updateSettings({ customNodes: updatedNodes });
+    addLog(`Updated: ${updatedNode.name}`, 'info');
+    setEditDialog({ visible: false, position: { x: 0, y: 0 }, item: null, name: '', url: '' });
+  };
+
+  const handleDeleteItem = (item: any) => {
+    if (confirm(`Удалить "${item.name || item.title}"?`)) {
+      const updatedNodes = settings.customNodes.filter(n => n.id !== item.id);
+      updateSettings({ customNodes: updatedNodes });
+      addLog(`Deleted: ${item.name}`, 'info');
+    }
+  };
+
+  const handleCopyItem = (item: any) => {
+    const text = item.url || item.streamUrl || item.url_resolved || item.name || JSON.stringify(item, null, 2);
+    navigator.clipboard.writeText(text);
+    addLog('Copied', 'info');
+  };
+  
+  const handleToggleIcon = (item: any) => {
+    setShowStreamIcons(prev => !prev);
+    addLog(showStreamIcons ? 'Icons hidden' : 'Icons shown', 'info');
+  };
+  
   // Сброс позиций облака
   const handleResetPositions = () => {
     positionCacheRef.current.clear();
@@ -342,10 +561,12 @@ const AppContent: React.FC = () => {
 
   // Конфигурация модулей для переключателя
   const modules = [
-    { id: 'discovery' as ModuleType, icon: <Globe size={20} />, label: 'SCAN' },
-    { id: 'nodes' as ModuleType, icon: <Database size={20} />, label: 'NODES' },
-    { id: 'themes' as ModuleType, icon: <Palette size={20} />, label: 'THEME' },
-    { id: 'models' as ModuleType, icon: <Layers size={20} />, label: 'MODELS' }
+    { id: 'streams' as ModuleType, icon: <List size={20} strokeWidth={1.5} />, label: 'STREAMS' },
+    { id: 'discovery' as ModuleType, icon: <Globe size={20} strokeWidth={1.5} />, label: 'SCAN' },
+    { id: 'nodes' as ModuleType, icon: <Database size={20} strokeWidth={1.5} />, label: 'NODES' },
+    { id: 'themes' as ModuleType, icon: <Palette size={20} strokeWidth={1.5} />, label: 'THEME' },
+    { id: 'models' as ModuleType, icon: <Layers size={20} strokeWidth={1.5} />, label: 'MODELS' },
+    { id: 'engine' as ModuleType, icon: <Cpu size={20} strokeWidth={1.5} />, label: 'ENGINE' }
   ];
 
   // Обработчики для Left Panel
@@ -453,119 +674,6 @@ const AppContent: React.FC = () => {
     >
       <div className="flex-1 flex flex-col overflow-hidden">
         
-        {/* Header OS Bar */}
-        <div 
-          className="w-full h-12 md:h-16 border-b flex items-center z-50" 
-          style={{ 
-            ...glassStyle,
-            borderColor: `${theme.text}11`,
-            backgroundColor: settings.display?.glassEffect ? theme.surface : 'rgba(0,0,0,0.05)'
-          }}
-        >
-          <button onClick={() => setIsLeftPanelOpen(!isLeftPanelOpen)} className="h-full px-3 md:px-5 border-r hover:bg-black/10 transition-all" style={{ borderColor: `${theme.text}11` }}>
-            <List className="w-4 h-4 md:w-[18px] md:h-[18px]" style={{ color: theme.text }} />
-          </button>
-          
-          {/* Компактный селектор движка */}
-          <div className="relative h-full border-r" style={{ borderColor: `${theme.text}11` }}>
-            <button
-              data-engine-button
-              onClick={() => setIsEngineDropdownOpen(!isEngineDropdownOpen)}
-              className="h-full px-3 md:px-4 hover:bg-black/10 transition-all flex items-center gap-1 md:gap-2"
-              title="Render Engine"
-            >
-              <span className="text-base md:text-xl">
-                {RENDER_ENGINES.find(e => e.id === (settings.display?.renderEngine || RenderEngine.THREEJS))?.icon || '🎨'}
-              </span>
-              <ChevronDown 
-                className="w-3 h-3 md:w-[14px] md:h-[14px] transition-transform"
-                style={{ 
-                  transform: isEngineDropdownOpen ? 'rotate(180deg)' : 'rotate(0deg)',
-                  color: theme.text
-                }}
-              />
-            </button>
-            
-            {/* Engine Panel - компактная панель как LeftPanel */}
-            {isEngineDropdownOpen && (
-              <div 
-                data-engine-panel
-                className="absolute top-full left-0 mt-2 bg-black/20 backdrop-blur-xl border rounded-lg shadow-xl z-50 transition-all duration-300"
-                style={{ 
-                  borderColor: `${theme.text}22`,
-                  width: 'auto',
-                  minWidth: '280px',
-                  maxWidth: '400px'
-                }}
-              >
-                <div className="p-4 space-y-1">
-                  <div className="text-[10px] font-black uppercase opacity-40 mb-3 tracking-wider px-2" style={{ color: theme.text }}>
-                    RENDER ENGINE
-                  </div>
-                  {RENDER_ENGINES.map(engine => {
-                    const isActive = (settings.display?.renderEngine || RenderEngine.THREEJS) === engine.id;
-                    const isAvailable = engine.id === RenderEngine.CSS3D || engine.id === RenderEngine.THREEJS;
-                    
-                    return (
-                      <button
-                        key={engine.id}
-                        onClick={() => {
-                          if (isAvailable) {
-                            updateSettings({ display: { ...settings.display, renderEngine: engine.id } });
-                            setIsEngineDropdownOpen(false);
-                          }
-                        }}
-                        disabled={!isAvailable}
-                        className="w-full px-3 py-2 flex items-center gap-3 hover:bg-white/10 transition-all text-left rounded-lg"
-                        style={{
-                          backgroundColor: isActive ? `${theme.text}15` : 'transparent',
-                          opacity: isAvailable ? 1 : 0.3,
-                          cursor: isAvailable ? 'pointer' : 'not-allowed'
-                        }}
-                      >
-                        <span className="text-xl">{engine.icon}</span>
-                        <div className="flex-1 min-w-0">
-                          <div className="text-xs font-bold uppercase truncate" style={{ color: theme.text }}>
-                            {engine.name}
-                          </div>
-                          <div className="text-[10px] opacity-50 truncate" style={{ color: theme.text }}>{engine.performance}</div>
-                        </div>
-                        {!isAvailable && (
-                          <span className="text-[9px] px-1.5 py-0.5 rounded bg-yellow-500/20 text-yellow-400 font-bold">
-                            SOON
-                          </span>
-                        )}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-          </div>
-          
-          <div className="flex-1 overflow-hidden">
-            <div className="marquee-slow whitespace-nowrap pl-full">
-              <span className="text-[10px] font-black uppercase font-syncopate tracking-[0.5em] opacity-10 mr-20" style={{ color: theme.text }}>
-                RELAY_SOURCE: {audioState.currentUrl} // CLUSTER: {searchQuery.toUpperCase()} // STATUS: {statusMessage}
-              </span>
-            </div>
-          </div>
-          
-          {/* Layout Edit Mode Toggle */}
-          <button 
-            onClick={() => setIsLayoutEditMode(!isLayoutEditMode)} 
-            className={`h-full px-3 md:px-5 border-l hover:bg-black/10 transition-all ${isLayoutEditMode ? 'bg-purple-600/30' : ''}`}
-            style={{ borderColor: `${theme.text}11` }} 
-            title="Layout Edit Mode"
-          >
-            <Layers className="w-4 h-4 md:w-[18px] md:h-[18px]" style={{ color: isLayoutEditMode ? theme.accent : theme.text }} />
-          </button>
-          
-          <button onClick={() => setIsRightPanelOpen(!isRightPanelOpen)} className="h-full px-3 md:px-5 border-l hover:bg-black/10 transition-all" style={{ borderColor: `${theme.text}11` }} title="Custom Streams">
-            <Radio className="w-4 h-4 md:w-[18px] md:h-[18px]" style={{ color: theme.text }} />
-          </button>
-        </div>
-
         {/* Stage - полный экран с облаком и панелями поверх */}
         <div className="flex-1 flex flex-col relative overflow-hidden">
             {/* Module Nav */}
@@ -609,6 +717,19 @@ const AppContent: React.FC = () => {
                       if (typeof item === 'object' && item.id) {
                         console.log('✅ Switching visualization provider:', item.id);
                         updateDisplaySettings({ visualizationProvider: item.id });
+                      }
+                    } else if (activeModule === 'streams') {
+                      // item - это поток {name, url, provider, providerName}
+                      if (typeof item === 'object' && item.url && item.provider) {
+                        handleTogglePlay(item.url, item.name, item.provider, false, {});
+                        // НЕ закрываем модуль, чтобы облако оставалось видимым
+                      }
+                    } else if (activeModule === 'engine') {
+                      // item - это движок {id, name, icon, performance}
+                      if (typeof item === 'object' && item.id) {
+                        updateSettings({ display: { ...settings.display, renderEngine: item.id } });
+                        addLog(`Engine: ${item.name}`, 'info');
+                        // НЕ закрываем модуль
                       }
                     } else if (activeModule === 'nodes') {
                       // item может быть: customNode {name, url, provider}, provider {id, name}, genre {name, url} или строка
@@ -657,6 +778,7 @@ const AppContent: React.FC = () => {
                     onDragEnd={() => setIsDragging(false)}
                     theme={theme}
                     fontSize={settings.displaySettings?.fontSize || 'lg'}
+                    showIcons={showStreamIcons}
                   />
                 );
               }
@@ -666,6 +788,7 @@ const AppContent: React.FC = () => {
               <ShardCloudThreeJS
                 rotation={rotation}
                 shards={mainCloudShards}
+                use3DModels={true}
                 onShardClick={(item) => {
                   console.log('🔥 Main Cloud Click - Module:', activeModule, 'Type:', typeof item, 'Data:', item);
                   
@@ -684,6 +807,19 @@ const AppContent: React.FC = () => {
                       console.log('✅ Applying 3D model:', item.id);
                       updateDisplaySettings({ tagModel: item.id });
                       addLog(`Model: ${item.name}`, 'info');
+                    }
+                  } else if (activeModule === 'streams') {
+                    // item - это поток {name, url, provider, providerName}
+                    if (typeof item === 'object' && item.url && item.provider) {
+                      handleTogglePlay(item.url, item.name, item.provider, false, {});
+                      // НЕ закрываем модуль
+                    }
+                  } else if (activeModule === 'engine') {
+                    // item - это движок {id, name, icon, performance}
+                    if (typeof item === 'object' && item.id) {
+                      updateSettings({ display: { ...settings.display, renderEngine: item.id } });
+                      addLog(`Engine: ${item.name}`, 'info');
+                      // НЕ закрываем модуль
                     }
                   } else if (activeModule === 'nodes') {
                     // item может быть: customNode {name, url, provider}, provider {id, name}, genre {name, url} или строка
@@ -751,237 +887,32 @@ const AppContent: React.FC = () => {
               </button>
             )}
 
-          {/* Layout Edit Mode UI */}
-          {isLayoutEditMode && (
-            <div className="absolute top-6 left-6 z-50 bg-black/90 backdrop-blur-xl rounded-lg p-4 border" style={{ borderColor: `${theme.accent}40` }}>
-              <div className="text-xs font-bold uppercase mb-3" style={{ color: theme.accent }}>
-                🎨 РЕЖИМ РЕДАКТИРОВАНИЯ
-              </div>
-              
-              {/* Селектор режима */}
-              <div className="mb-3 space-y-2">
-                <div className="text-[10px] opacity-50 mb-1" style={{ color: theme.text }}>РЕЖИМ:</div>
-                {[
-                  { value: 'normal', label: 'ВЫКЛ', icon: '⚫' },
-                  { value: 'move', label: 'ПЕРЕМЕЩЕНИЕ', icon: '🔀' },
-                  { value: 'resize', label: 'РАЗМЕР', icon: '📏' },
-                  { value: 'full', label: 'ПОЛНЫЙ', icon: '✨' }
-                ].map(mode => (
-                  <button
-                    key={mode.value}
-                    onClick={() => setEditMode(mode.value as any)}
-                    className={`w-full px-3 py-1.5 text-[10px] font-bold uppercase rounded transition-all ${
-                      editMode === mode.value ? 'bg-purple-600' : 'bg-white/5 hover:bg-white/10'
-                    }`}
-                    style={{ color: theme.text }}
-                  >
-                    {mode.icon} {mode.label}
-                  </button>
-                ))}
-              </div>
-              
-              <div className="text-[10px] opacity-70 mb-3 space-y-1" style={{ color: theme.text }}>
-                {editMode === 'move' && <div>• Только перемещение элементов</div>}
-                {editMode === 'resize' && <div>• Только изменение размера</div>}
-                {editMode === 'full' && (
-                  <>
-                    <div>• Наведите на панель - появятся ручки</div>
-                    <div>• Тяните за ручку для перемещения</div>
-                    <div>• Тяните за угол для изменения размера</div>
-                  </>
-                )}
-              </div>
-              
-              <button
-                onClick={() => {
-                  resetLayout();
-                  addLog('Layout reset', 'info');
-                }}
-                className="w-full px-3 py-1.5 text-[10px] font-bold uppercase rounded bg-red-500/20 hover:bg-red-500/40 transition-all"
-                style={{ color: theme.text }}
-              >
-                СБРОСИТЬ LAYOUT
-              </button>
-            </div>
-          )}
-
-          {/* Абсолютно позиционированные панели поверх облака */}
-          {editMode !== 'normal' || isLayoutEditMode ? (
-            <>
-              <DraggableElement 
-                id="streams-list" 
-                showHandle={true} 
-                resizable={true}
-                defaultPanel="left"
-                defaultSize={{ width: 480, height: 600 }}
-              >
-                <LeftPanel
-                  isOpen={isLeftPanelOpen}
-                  providers={PROVIDERS}
-                  genresByProvider={GENRES_BY_PROVIDER}
-                  customNodes={settings.customNodes}
-                  currentGenre={audioState.currentGenre}
-                  onGenreClick={handleGenreClick}
-                  getGenreUrl={getGenreUrl}
-                  theme={theme}
-                  onDeleteNode={handleDeleteNode}
-                  onEditNode={handleEditNode}
-                  onAddNode={handleAddNode}
-                />
-              </DraggableElement>
-
-              <DraggableElement 
-                id="custom-nodes" 
-                showHandle={true} 
-                resizable={true}
-                defaultPanel="right"
-                defaultSize={{ width: 320, height: 600 }}
-              >
-                <RightPanel
-                  isOpen={isRightPanelOpen}
-                  customNodes={settings.customNodes}
-                  currentGenre={audioState.currentGenre}
-                  onGenreClick={handleGenreClick}
-                  onEditNode={handleEditNode}
-                  onDeleteNode={handleDeleteNode}
-                  onAddNode={handleAddNode}
-                  theme={theme}
-                />
-              </DraggableElement>
-            </>
-          ) : (
-            <>
-              <LeftPanel
-                isOpen={isLeftPanelOpen}
-                providers={PROVIDERS}
-                genresByProvider={GENRES_BY_PROVIDER}
-                customNodes={settings.customNodes}
-                currentGenre={audioState.currentGenre}
-                onGenreClick={handleGenreClick}
-                getGenreUrl={getGenreUrl}
-                theme={theme}
-                onDeleteNode={handleDeleteNode}
-                onEditNode={handleEditNode}
-                onAddNode={handleAddNode}
-              />
-
-              <RightPanel
-                isOpen={isRightPanelOpen}
-                customNodes={settings.customNodes}
-                currentGenre={audioState.currentGenre}
-                onGenreClick={handleGenreClick}
-                onEditNode={handleEditNode}
-                onDeleteNode={handleDeleteNode}
-                onAddNode={handleAddNode}
-                theme={theme}
-              />
-            </>
-          )}
+          {/* LeftPanel убрана - потоки показываются в облаке тегов */}
         </div>
 
-        {/* Master Footer Module */}
-        <div className="h-20 md:h-28 border-t flex items-center justify-between px-4 md:px-10 bg-black/5 z-[300] backdrop-blur-3xl" style={{ borderColor: `${theme.text}11` }}>
+        {/* Master Footer Module - стеклянная прозрачная панель */}
+        <div className="h-16 md:h-20 border-t flex items-center justify-between px-4 md:px-8 bg-black/5 backdrop-blur-2xl z-[300]" style={{ borderColor: `${theme.text}08` }}>
           {/* Feed Metadata */}
           <TrackInfo metadata={metadata} onCopyMetadata={copyMetadata} />
           
-          {/* Compact Search */}
-          <div className="flex items-center gap-3">
-            {/* Quick Display Settings */}
-            <div className="flex items-center gap-2 opacity-30 hover:opacity-100 transition-opacity">
-              {/* Visualization Provider Selector */}
-              <button
-                onClick={() => {
-                  const providers = getAllVisualizationProviders();
-                  const current = settings.displaySettings?.visualizationProvider || VisualizationProvider.THREEJS_PLANETS;
-                  const currentIndex = providers.findIndex(p => p.id === current);
-                  const next = providers[(currentIndex + 1) % providers.length];
-                  updateDisplaySettings({ visualizationProvider: next.id });
-                  addLog(`Viz: ${next.name}`, 'info');
-                }}
-                className="p-2 rounded-lg hover:bg-white/10 transition-all"
-                style={{ color: theme.accent }}
-                title={`Visualization: ${getAllVisualizationProviders().find(p => p.id === (settings.displaySettings?.visualizationProvider || VisualizationProvider.THREEJS_PLANETS))?.name || 'Planets'}`}
-              >
-                <Orbit size={16} />
-              </button>
-              
-              {/* Enable/Disable Visualization */}
-              <button
-                onClick={() => {
-                  const enabled = settings.displaySettings?.visualizationEnabled ?? true;
-                  updateDisplaySettings({ visualizationEnabled: !enabled });
-                  addLog(enabled ? 'Viz: OFF' : 'Viz: ON', 'info');
-                }}
-                className="p-2 rounded-lg hover:bg-white/10 transition-all"
-                style={{ 
-                  color: theme.text,
-                  opacity: (settings.displaySettings?.visualizationEnabled ?? true) ? 1 : 0.2
-                }}
-                title="Toggle Visualization"
-              >
-                <Eye size={16} />
-              </button>
-              
-              {/* Font Size */}
-              <button
-                onClick={() => {
-                  const sizes = ['xs', 'sm', 'md', 'lg', 'xl', 'xxl'] as const;
-                  const current = settings.displaySettings?.fontSize || 'lg';
-                  const next = sizes[(sizes.indexOf(current) + 1) % sizes.length];
-                  updateDisplaySettings({ fontSize: next });
-                }}
-                className="p-2 rounded-lg hover:bg-white/10 transition-all"
-                style={{ color: theme.text }}
-                title="Font Size"
-              >
-                <Type size={16} />
-              </button>
-              
-              {/* Icon Size */}
-              <button
-                onClick={() => {
-                  const sizes = ['sm', 'md', 'lg', 'xl'] as const;
-                  const current = settings.displaySettings?.iconSize || 'lg';
-                  const next = sizes[(sizes.indexOf(current) + 1) % sizes.length];
-                  updateDisplaySettings({ iconSize: next });
-                }}
-                className="p-2 rounded-lg hover:bg-white/10 transition-all"
-                style={{ color: theme.text }}
-                title="Icon Size"
-              >
-                <Maximize size={16} />
-              </button>
-              
-              {/* Glass Effect */}
-              <button
-                onClick={() => updateDisplaySettings({ glassEffect: !settings.displaySettings?.glassEffect })}
-                className="p-2 rounded-lg hover:bg-white/10 transition-all"
-                style={{ 
-                  color: theme.text,
-                  opacity: settings.displaySettings?.glassEffect ? 1 : 0.3
-                }}
-                title="Glass Effect"
-              >
-                <Sparkles size={16} />
-              </button>
-            </div>
-            
-            {/* Compact Search Input */}
+          {/* Compact Search - упрощенный, без лишних кнопок */}
+          <div className="flex items-center gap-2">
+            {/* Compact Search Input - упрощенный */}
             <div className="relative hidden md:block">
               <input
                 type="text"
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
-                placeholder="Search stations..."
-                className="w-48 md:w-64 px-3 md:px-4 py-2 pr-8 md:pr-10 text-xs md:text-sm rounded-full bg-black/20 backdrop-blur-xl border transition-all focus:w-64 md:focus:w-96 focus:bg-black/40 outline-none"
+                placeholder="Search..."
+                className="w-32 px-3 py-1.5 pr-8 text-xs rounded-full bg-black/5 backdrop-blur-xl border transition-all focus:w-48 focus:bg-black/10 outline-none"
                 style={{ 
-                  borderColor: activeModule === 'discovery' ? theme.accent : `${theme.text}22`,
+                  borderColor: activeModule === 'discovery' ? theme.accent : `${theme.text}10`,
                   color: theme.text
                 }}
               />
               <Search 
-                size={16} 
-                className="absolute right-3 top-1/2 -translate-y-1/2 opacity-40 pointer-events-none"
+                size={14} 
+                className="absolute right-2 top-1/2 -translate-y-1/2 opacity-30 pointer-events-none"
                 style={{ color: theme.text }}
               />
             </div>
@@ -1006,18 +937,88 @@ const AppContent: React.FC = () => {
             </div>
           </div>
 
-          {/* Controls & Volume */}
-          <div className="flex-shrink-0 flex items-center justify-end gap-3 md:gap-6">
+          {/* Controls & Volume - минималистичные */}
+          <div className="flex-shrink-0 flex items-center justify-end gap-2 md:gap-3">
             <VolumeControl volume={audioState.volume} onVolumeChange={setVolume} />
             <button
               onClick={() => toggleModule('discovery')}
-              className="w-12 h-12 rounded-2xl bg-indigo-600 text-white flex items-center justify-center shadow-xl hover:scale-110 transition-all border border-white/5"
+              className="w-8 h-8 rounded-lg bg-white/10 backdrop-blur-xl text-white flex items-center justify-center hover:bg-white/20 transition-all border border-white/10"
             >
-              <Search size={20} />
+              <Search size={14} />
             </button>
           </div>
         </div>
       </div>
+      
+      {/* Контекстное меню для всех тегов */}
+      <TagContextMenu
+        isVisible={contextMenu.visible}
+        position={contextMenu.position}
+        item={contextMenu.item}
+        moduleType={activeModule}
+        onSave={handleSaveToStreams}
+        onEdit={handleEditItem}
+        onDelete={handleDeleteItem}
+        onCopy={handleCopyItem}
+        onToggleIcon={handleToggleIcon}
+        onClose={() => setContextMenu({ visible: false, position: { x: 0, y: 0 }, item: null })}
+        theme={theme}
+        showIcons={showStreamIcons}
+      />
+      
+      {/* Диалог редактирования */}
+      {editDialog.visible && (
+        <>
+          <div
+            className="fixed inset-0 z-[9998] bg-black/50"
+            onClick={() => setEditDialog({ visible: false, position: { x: 0, y: 0 }, item: null, name: '', url: '' })}
+          />
+          <div
+            className="fixed z-[9999] bg-black/90 backdrop-blur-xl rounded-lg shadow-2xl border border-white/20 p-4 min-w-[300px]"
+            style={{
+              left: `${Math.min(editDialog.position.x, window.innerWidth - 320)}px`,
+              top: `${Math.min(editDialog.position.y, window.innerHeight - 200)}px`,
+              color: theme.text
+            }}
+          >
+            <div className="space-y-3">
+              <div className="text-sm font-bold uppercase opacity-70">Редактировать</div>
+              <input
+                type="text"
+                value={editDialog.name}
+                onChange={(e) => setEditDialog(prev => ({ ...prev, name: e.target.value }))}
+                placeholder="Название"
+                className="w-full px-3 py-2 text-sm rounded bg-black/30 border border-white/10 outline-none"
+                style={{ color: theme.text }}
+              />
+              <input
+                type="text"
+                value={editDialog.url}
+                onChange={(e) => setEditDialog(prev => ({ ...prev, url: e.target.value }))}
+                placeholder="URL потока"
+                className="w-full px-3 py-2 text-sm rounded bg-black/30 border border-white/10 outline-none"
+                style={{ color: theme.text }}
+              />
+              <div className="flex gap-2">
+                <button
+                  onClick={handleSaveEdit}
+                  className="flex-1 px-3 py-2 rounded bg-green-500/20 hover:bg-green-500/30 transition-all text-xs font-medium"
+                  style={{ color: theme.text }}
+                >
+                  Сохранить
+                </button>
+                <button
+                  onClick={() => setEditDialog({ visible: false, position: { x: 0, y: 0 }, item: null, name: '', url: '' })}
+                  className="flex-1 px-3 py-2 rounded bg-red-500/20 hover:bg-red-500/30 transition-all text-xs font-medium"
+                  style={{ color: theme.text }}
+                >
+                  Отмена
+                </button>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 };

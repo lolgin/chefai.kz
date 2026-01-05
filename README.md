@@ -95,9 +95,10 @@ src/
 
 ## 🎯 Key Features
 
-- **Context API** для глобального состояния (audio, settings, metadata)
+- **Context API** для глобального состояния (audio, settings, metadata, layout)
 - **Custom Hooks** для переиспользуемой логики
 - **Модульные компоненты** - каждый файл < 300 строк
+- **🎯 Drag & Drop система** - перемещение и изменение размера любых элементов (см. [DRAG_DROP_GUIDE.md](./DRAG_DROP_GUIDE.md))
 - **TypeScript** типизация для всех компонентов
 - **3D визуализация** с использованием CSS 3D transforms
 - **AI-генерация метаданных** через Gemini API

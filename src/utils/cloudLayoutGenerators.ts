@@ -9,12 +9,15 @@
  * - wave: синусоидальная волна
  */
 
+import { getCachedModelUrl } from '../services/modelMatcher';
+
 export interface CloudItem {
   data: any;
   x: number;
   y: number;
   z: number;
   size: number;
+  model3DUrl?: string; // Динамически подобранная 3D модель
 }
 
 export type CloudLayoutGenerator = (items: any[], radius: number) => CloudItem[];
@@ -32,7 +35,8 @@ export const generateSpherePositions: CloudLayoutGenerator = (items, radius = 30
       x: radius * Math.cos(theta) * Math.sin(phi),
       y: radius * Math.sin(theta) * Math.sin(phi),
       z: radius * Math.cos(phi) * 0.4, // Уменьшили глубину в 2.5 раза
-      size: 0.7 + Math.random() * 0.6
+      size: 0.7 + Math.random() * 0.6,
+      model3DUrl: getCachedModelUrl(item) // Умное определение модели
     };
   });
 };
@@ -61,7 +65,8 @@ export const generateCubePositions: CloudLayoutGenerator = (items, size = 300) =
     return {
       data: item,
       x, y, z,
-      size: 0.7 + Math.random() * 0.6
+      size: 0.7 + Math.random() * 0.6,
+      model3DUrl: getCachedModelUrl(item)
     };
   });
 };
@@ -82,7 +87,8 @@ export const generateSpiralPositions: CloudLayoutGenerator = (items, radius = 30
       x: r * Math.cos(angle),
       y: height,
       z: r * Math.sin(angle) * 0.4, // Уменьшили глубину
-      size: 0.7 + Math.random() * 0.6
+      size: 0.7 + Math.random() * 0.6,
+      model3DUrl: getCachedModelUrl(item)
     };
   });
 };
@@ -104,7 +110,8 @@ export const generateGridPositions: CloudLayoutGenerator = (items, spacing = 100
       x: col * spacing - offset,
       y: row * spacing - offset,
       z: (Math.random() - 0.5) * 40, // Уменьшили глубину с 100 до 40
-      size: 0.7 + Math.random() * 0.6
+      size: 0.7 + Math.random() * 0.6,
+      model3DUrl: getCachedModelUrl(item)
     };
   });
 };
@@ -129,7 +136,8 @@ export const generateWavePositions: CloudLayoutGenerator = (items, amplitude = 3
     return {
       data: item,
       x, y, z,
-      size: 0.7 + Math.random() * 0.6
+      size: 0.7 + Math.random() * 0.6,
+      model3DUrl: getCachedModelUrl(item)
     };
   });
 };

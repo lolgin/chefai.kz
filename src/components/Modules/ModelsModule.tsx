@@ -3,12 +3,16 @@
  * 
  * Модуль для выбора 3D моделей для тегов
  * Работает по той же логике что Discovery/Nodes/Themes
+ * + Gemini AI управление и агрегаторы
  */
 
 import React, { useState, useMemo } from 'react';
-import { X, Search, Layers } from 'lucide-react';
+import { X, Search, Layers, Settings, Zap, Globe, Cpu, Sliders } from 'lucide-react';
 import { BUILT_IN_MODELS, MODEL_CATEGORIES, ModelCategory } from '../../constants/models';
 import { useSettings } from '../../contexts/SettingsContext';
+import { getGeminiModelService } from '../../services/geminiModelService';
+import { setAIEnabled } from '../../services/modelMatcher';
+import '../../styles/ai-controls.css';
 
 interface ModelsModuleProps {
   onClose: () => void;
@@ -24,9 +28,17 @@ export const ModelsModule: React.FC<ModelsModuleProps> = ({ onClose, theme }) =>
   const { settings, updateDisplaySettings } = useSettings();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<ModelCategory | 'all'>('all');
+  const [showSettings, setShowSettings] = useState(false);
+  
+  // AI & Aggregator settings
+  const [aiEnabled, setAiEnabled] = useState(true);
+  const [temperature, setTemperature] = useState(0.7);
+  const [useAggregators, setUseAggregators] = useState(true);
   
   // Текущая выбранная модель
   const currentModel = settings.display?.tagModel || 'sphere';
+  
+  const gemini = getGeminiModelService();
   
   // Фильтрация моделей
   const filteredModels = useMemo(() => {
@@ -81,18 +93,183 @@ export const ModelsModule: React.FC<ModelsModuleProps> = ({ onClose, theme }) =>
                 3D Models Library
               </h2>
               <p className="text-sm opacity-60" style={{ color: theme.text }}>
-                Choose a 3D model for your tags
+                Choose a 3D model for your tags • AI-powered selection
               </p>
             </div>
           </div>
-          <button
-            onClick={onClose}
-            className="p-2 rounded-lg hover:bg-white/10 transition-all"
-            style={{ color: theme.text }}
-          >
-            <X size={20} />
-          </button>
+          
+          <div className="flex items-center gap-2">
+            {/* AI Settings Button */}
+            <button
+              onClick={() => setShowSettings(!showSettings)}
+              className={`p-2 rounded-lg transition-all ${showSettings ? 'bg-white/20' : 'hover:bg-white/10'}`}
+              style={{ color: theme.text }}
+              title="AI & Aggregator Settings"
+            >
+              <Sliders size={20} />
+            </button>
+            
+            {/* Close Button */}
+            <button
+              onClick={onClose}
+              className="p-2 rounded-lg hover:bg-white/10 transition-all"
+              style={{ color: theme.text }}
+            >
+              <X size={20} />
+            </button>
+          </div>
         </div>
+        
+        {/* AI Settings Panel */}
+        {showSettings && (
+          <div 
+            className="p-6 border-b bg-black/20"
+            style={{ borderColor: `${theme.accent}20` }}
+          >
+            <div className="space-y-4">
+              {/* AI Toggle */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Cpu size={18} style={{ color: theme.accent }} className={aiEnabled ? 'ai-status-active' : ''} />
+                  <span className="font-medium" style={{ color: theme.text }}>
+                    Gemini AI Assistant
+                  </span>
+                </div>
+                <button
+                  onClick={() => {
+                    setAiEnabled(!aiEnabled);
+                    setAIEnabled(!aiEnabled);
+                  }}
+                  className={`px-4 py-2 rounded-lg font-medium transition-all ai-toggle-btn ${aiEnabled ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}`}
+                >
+                  {aiEnabled ? '✓ ENABLED' : '✗ DISABLED'}
+                </button>
+              </div>
+              
+              {/* Temperature Slider */}
+              <div>
+                <div className="flex justify-between mb-2">
+                  <span className="text-sm opacity-60" style={{ color: theme.text }}>
+                    Creativity (Temperature)
+                  </span>
+                  <span className="text-sm font-mono" style={{ color: theme.accent }}>
+                    {temperature.toFixed(2)}
+                  </span>
+                </div>
+                <input
+                  type="range"
+                  min="0"
+                  max="1"
+                  step="0.05"
+                  value={temperature}
+                  onChange={(e) => {
+                    const val = parseFloat(e.target.value);
+                    setTemperature(val);
+                    gemini?.updateSettings({ temperature: val });
+                  }}
+                  className="w-full gemini-slider"
+                />
+                <div className="flex justify-between text-xs opacity-40 mt-1" style={{ color: theme.text }}>
+                  <span>🎯 Precise</span>
+                  <span>🎨 Creative</span>
+                </div>
+              </div>
+              
+              {/* Aggregators Toggle */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Globe size={18} style={{ color: theme.accent }} />
+                  <div>
+                    <div className="font-medium" style={{ color: theme.text }}>
+                      External Aggregators
+                    </div>
+                    <div className="text-xs opacity-60" style={{ color: theme.text }}>
+                      Sketchfab, Poly Haven, etc.
+                    </div>
+                  </div>
+                </div>
+                <button
+                  onClick={() => {
+                    setUseAggregators(!useAggregators);
+                    gemini?.updateSettings({ enableAggregators: !useAggregators });
+                  }}
+                  className={`px-4 py-2 rounded-lg font-medium transition-all ${useAggregators ? 'bg-blue-500/20 text-blue-400' : 'bg-gray-500/20 text-gray-400'}`}
+                >
+                  {useAggregators ? '✓ ON' : '✗ OFF'}
+                </button>
+              </div>
+              
+              {/* AI Status */}
+              <div 
+                className="p-3 rounded-lg bg-black/30 border"
+                style={{ borderColor: `${theme.accent}20` }}
+              >
+                <div className="flex items-center gap-2 mb-2">
+                  <Zap size={16} style={{ color: theme.accent }} />
+                  <span className="text-sm font-medium" style={{ color: theme.text }}>
+                    AI Status
+                  </span>
+                </div>
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  <div style={{ color: theme.text, opacity: 0.6 }}>
+                    Model: <span className="font-mono text-green-400">gemini-2.0-flash</span>
+                  </div>
+                  <div style={{ color: theme.text, opacity: 0.6 }}>
+                    Features: <span className="font-mono text-blue-400">5 active</span>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Natural Language Query */}
+              <div>
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-sm font-medium" style={{ color: theme.text }}>
+                    💬 Ask Gemini
+                  </span>
+                </div>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    placeholder="e.g., 'find a space model for ambient tags'"
+                    className="flex-1 px-3 py-2 rounded-lg bg-black/40 border text-sm"
+                    style={{ 
+                      borderColor: `${theme.accent}30`,
+                      color: theme.text 
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        const query = e.currentTarget.value;
+                        if (query.trim()) {
+                          console.log('🤖 Gemini Query:', query);
+                          // TODO: Implement askGeminiForCommand
+                          e.currentTarget.value = '';
+                        }
+                      }
+                    }}
+                  />
+                  <button
+                    className="px-4 py-2 rounded-lg font-medium transition-all"
+                    style={{ 
+                      backgroundColor: `${theme.accent}40`,
+                      color: theme.accent 
+                    }}
+                    onClick={(e) => {
+                      const input = e.currentTarget.previousElementSibling as HTMLInputElement;
+                      const query = input?.value;
+                      if (query?.trim()) {
+                        console.log('🤖 Gemini Query:', query);
+                        // TODO: Implement askGeminiForCommand
+                        input.value = '';
+                      }
+                    }}
+                  >
+                    Ask
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Search & Category Filter */}
         <div className="p-6 border-b" style={{ borderColor: `${theme.accent}20` }}>

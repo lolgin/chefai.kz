@@ -7,11 +7,14 @@
  * - Сферы разных размеров и цветов
  * - Клики на объекты через raycasting
  * - Вращение мышью
+ * - Drag & Drop поддержка через LayoutContext
  */
 
 import React, { useRef, useEffect } from 'react';
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { CSS3DRenderer, CSS3DObject } from 'three/examples/jsm/renderers/CSS3DRenderer.js';
+import { useLayout } from '../../contexts/LayoutContext';
 
 interface ShardCloudThreeJSProps {
   rotation: { x: number; y: number };
@@ -38,6 +41,8 @@ export const ShardCloudThreeJS: React.FC<ShardCloudThreeJSProps> = ({
   theme,
   use3DModels = false
 }) => {
+  const { editMode, layouts, registerElement, updateLayout } = useLayout();
+  
   // Визуализация провайдеров больше не используется
   // Все позиции приходят через shards prop (кешированные в App.tsx)
   
@@ -45,9 +50,12 @@ export const ShardCloudThreeJS: React.FC<ShardCloudThreeJSProps> = ({
   const sceneRef = useRef<THREE.Scene | null>(null);
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
+  const css3DRendererRef = useRef<CSS3DRenderer | null>(null);
+  const css3DSceneRef = useRef<THREE.Scene | null>(null);
   const objectsRef = useRef<Map<THREE.Mesh | THREE.Group, any>>(new Map());
   const raycasterRef = useRef(new THREE.Raycaster());
   const mouseRef = useRef(new THREE.Vector2());
+  const draggedObjectRef = useRef<THREE.Mesh | THREE.Group | null>(null);
   const isDraggingRef = useRef(false);
   const mouseDownPosRef = useRef({ x: 0, y: 0 });
   const isRightDraggingRef = useRef(false);
@@ -72,6 +80,10 @@ export const ShardCloudThreeJS: React.FC<ShardCloudThreeJSProps> = ({
     const scene = new THREE.Scene();
     sceneRef.current = scene;
 
+    // CSS3D Scene for text labels
+    const css3DScene = new THREE.Scene();
+    css3DSceneRef.current = css3DScene;
+
     // Camera
     const camera = new THREE.PerspectiveCamera(
       60,
@@ -92,6 +104,16 @@ export const ShardCloudThreeJS: React.FC<ShardCloudThreeJSProps> = ({
     renderer.setPixelRatio(window.devicePixelRatio);
     rendererRef.current = renderer;
 
+    // CSS3D Renderer for text labels
+    const css3DRenderer = new CSS3DRenderer();
+    css3DRenderer.setSize(container.clientWidth, container.clientHeight);
+    css3DRenderer.domElement.style.position = 'absolute';
+    css3DRenderer.domElement.style.top = '0';
+    css3DRenderer.domElement.style.left = '0';
+    css3DRenderer.domElement.style.pointerEvents = 'none'; // Allow clicks through to WebGL
+    container.appendChild(css3DRenderer.domElement);
+    css3DRendererRef.current = css3DRenderer;
+
     // Ambient light
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
     scene.add(ambientLight);
@@ -109,6 +131,7 @@ export const ShardCloudThreeJS: React.FC<ShardCloudThreeJSProps> = ({
       camera.aspect = width / height;
       camera.updateProjectionMatrix();
       renderer.setSize(width, height);
+      css3DRenderer.setSize(width, height);
     };
     window.addEventListener('resize', handleResize);
 
@@ -118,18 +141,25 @@ export const ShardCloudThreeJS: React.FC<ShardCloudThreeJSProps> = ({
       if (renderer && scene && camera) {
         renderer.render(scene, camera);
       }
+      if (css3DRenderer && css3DScene && camera) {
+        css3DRenderer.render(css3DScene, camera);
+      }
     };
     animate();
 
     return () => {
       window.removeEventListener('resize', handleResize);
       renderer.dispose();
+      if (css3DRenderer.domElement.parentElement) {
+        css3DRenderer.domElement.parentElement.removeChild(css3DRenderer.domElement);
+      }
     };
   }, []);
 
   // Обновление объектов
   useEffect(() => {
     const scene = sceneRef.current;
+    const css3DScene = css3DSceneRef.current;
     if (!scene) return;
 
     // Очищаем старые объекты
@@ -146,10 +176,32 @@ export const ShardCloudThreeJS: React.FC<ShardCloudThreeJSProps> = ({
     });
     objectsRef.current.clear();
 
+    // Очищаем CSS3D scene
+    if (css3DScene) {
+      while (css3DScene.children.length > 0) {
+        css3DScene.remove(css3DScene.children[0]);
+      }
+    }
+
     // Создаём новые объекты
     shards.forEach((shard, index) => {
-      const x = shard.x;
-      const y = shard.y;
+      // Генерируем уникальный ID для тега
+      const tagName = typeof shard.data === 'string' 
+        ? shard.data 
+        : (shard.data?.name || shard.data?.title || shard.data?.url || `planet_${index}`);
+      const tagId = `tag-3d-${tagName.replace(/[^a-zA-Z0-9]/g, '-')}`;
+      
+      // Регистрируем элемент в LayoutContext
+      registerElement(tagId, {
+        panel: 'float',
+        position: { x: shard.x, y: shard.y },
+        size: { width: shard.size * 50, height: shard.size * 50 }
+      });
+      
+      // Проверяем кастомную позицию из layouts
+      const layout = layouts[tagId];
+      const x = layout?.position?.x ?? shard.x;
+      const y = layout?.position?.y ?? shard.y;
       const z = shard.z;
       const scale = 1.0;
       
@@ -161,7 +213,7 @@ export const ShardCloudThreeJS: React.FC<ShardCloudThreeJSProps> = ({
         createSphere(shard, x, y, z, scale, scene, index);
       }
     });
-  }, [shards, use3DModels]);
+  }, [shards, use3DModels, layouts, registerElement]);
 
   // Функция создания сферы (fallback)
   const createSphere = (
@@ -191,6 +243,34 @@ export const ShardCloudThreeJS: React.FC<ShardCloudThreeJSProps> = ({
     mesh.position.set(x, y, z);
     objectsRef.current.set(mesh, shard.data);
     scene.add(mesh);
+
+    // Create text label with CSS3D
+    const labelText = typeof shard.data === 'string' 
+      ? shard.data 
+      : (shard.data?.name || shard.data?.title || shard.data?.url || '');
+    
+    if (labelText && css3DSceneRef.current) {
+      const labelDiv = document.createElement('div');
+      labelDiv.className = 'shard-label-3d';
+      labelDiv.style.cssText = `
+        color: rgba(255, 255, 255, 0.9);
+        font-size: ${Math.max(12, shard.size * 8)}px;
+        font-weight: 500;
+        text-shadow: 0 0 8px rgba(0, 0, 0, 0.8), 0 2px 4px rgba(0, 0, 0, 0.6);
+        padding: 4px 8px;
+        background: rgba(0, 0, 0, 0.3);
+        border-radius: 4px;
+        backdrop-filter: blur(4px);
+        white-space: nowrap;
+        pointer-events: none;
+        user-select: none;
+      `;
+      labelDiv.textContent = labelText;
+
+      const labelObject = new CSS3DObject(labelDiv);
+      labelObject.position.set(x, y + radius + 20, z); // Position above sphere
+      css3DSceneRef.current.add(labelObject);
+    }
   };
 
   // Функция загрузки 3D модели
@@ -282,11 +362,18 @@ export const ShardCloudThreeJS: React.FC<ShardCloudThreeJSProps> = ({
   // Применяем вращение
   useEffect(() => {
     const scene = sceneRef.current;
+    const css3DScene = css3DSceneRef.current;
     if (!scene) return;
     
     // Используем внутреннее вращение (от правой кнопки мыши)
-    scene.rotation.x = THREE.MathUtils.degToRad(currentRotationRef.current.x);
-    scene.rotation.y = THREE.MathUtils.degToRad(currentRotationRef.current.y);
+    const rotX = THREE.MathUtils.degToRad(currentRotationRef.current.x);
+    const rotY = THREE.MathUtils.degToRad(currentRotationRef.current.y);
+    scene.rotation.x = rotX;
+    scene.rotation.y = rotY;
+    if (css3DScene) {
+      css3DScene.rotation.x = rotX;
+      css3DScene.rotation.y = rotY;
+    }
   }, []);
 
   // Обработчики взаимодействия
@@ -311,16 +398,21 @@ export const ShardCloudThreeJS: React.FC<ShardCloudThreeJSProps> = ({
         const intersects = raycasterRef.current.intersectObjects(Array.from(objectsRef.current.keys()));
         
         if (intersects.length > 0) {
-          // Начинаем drag планеты
-          const mesh = intersects[0].object as THREE.Mesh;
-          draggedMeshRef.current = mesh;
-          dragStartPosRef.current = mesh.position.clone();
+          // Разрешаем drag планет только в режиме редактирования (move или full)
+          const canMove = editMode === 'move' || editMode === 'full';
           
-          // Создаем плоскость для drag'a (параллельную камере)
-          const normal = new THREE.Vector3(0, 0, 1);
-          normal.applyQuaternion(camera.quaternion);
-          dragPlaneRef.current = new THREE.Plane(normal, 0);
-          dragPlaneRef.current.setFromNormalAndCoplanarPoint(normal, mesh.position);
+          if (canMove) {
+            // Начинаем drag планеты
+            const mesh = intersects[0].object as THREE.Mesh;
+            draggedMeshRef.current = mesh;
+            dragStartPosRef.current = mesh.position.clone();
+            
+            // Создаем плоскость для drag'a (параллельную камере)
+            const normal = new THREE.Vector3(0, 0, 1);
+            normal.applyQuaternion(camera.quaternion);
+            dragPlaneRef.current = new THREE.Plane(normal, 0);
+            dragPlaneRef.current.setFromNormalAndCoplanarPoint(normal, mesh.position);
+          }
         }
       } else if (event.button === 2) { // Правая кнопка - вращение облака
         event.preventDefault();
@@ -363,8 +455,24 @@ export const ShardCloudThreeJS: React.FC<ShardCloudThreeJSProps> = ({
         currentRotationRef.current.y += deltaX * 0.3;
         currentRotationRef.current.x += deltaY * 0.3;
 
-        scene.rotation.x = THREE.MathUtils.degToRad(currentRotationRef.current.x);
-        scene.rotation.y = THREE.MathUtils.degToRad(currentRotationRef.current.y);
+        const rotX = THREE.MathUtils.degToRad(currentRotationRef.current.x);
+        const rotY = THREE.MathUtils.degToRad(currentRotationRef.current.y);
+        scene.rotation.x = rotX;
+        scene.rotation.y = rotY;
+        
+        const css3DScene = css3DSceneRef.current;
+        if (css3DScene) {
+          css3DScene.rotation.x = rotX;
+          css3DScene.rotation.y = rotY;
+        }
+        scene.rotation.x = rotX;
+        scene.rotation.y = rotY;
+        
+        const css3DScene = css3DSceneRef.current;
+        if (css3DScene) {
+          css3DScene.rotation.x = rotX;
+          css3DScene.rotation.y = rotY;
+        }
 
         lastMousePosRef.current = { x: event.clientX, y: event.clientY };
       }
@@ -372,6 +480,28 @@ export const ShardCloudThreeJS: React.FC<ShardCloudThreeJSProps> = ({
 
     const handleMouseUp = (event: MouseEvent) => {
       if (event.button === 0) {
+        // Сохраняем позицию планеты в LayoutContext
+        if (draggedMeshRef.current && isDraggingRef.current) {
+          const mesh = draggedMeshRef.current;
+          const data = objectsRef.current.get(mesh);
+          
+          if (data) {
+            // Генерируем ID тега
+            const tagName = typeof data === 'string' 
+              ? data 
+              : (data?.name || data?.title || data?.url || 'planet');
+            const tagId = `tag-3d-${tagName.replace(/[^a-zA-Z0-9]/g, '-')}`;
+            
+            // Сохраняем новую позицию
+            updateLayout(tagId, {
+              position: {
+                x: mesh.position.x,
+                y: mesh.position.y
+              }
+            });
+          }
+        }
+        
         // Сбрасываем drag планеты
         draggedMeshRef.current = null;
         dragStartPosRef.current = null;
@@ -427,7 +557,7 @@ export const ShardCloudThreeJS: React.FC<ShardCloudThreeJSProps> = ({
       canvas.removeEventListener('wheel', handleWheel);
       canvas.removeEventListener('contextmenu', handleContextMenu);
     };
-  }, [onShardClick]);
+  }, [onShardClick, editMode, updateLayout]);
 
   return (
     <div className="scene-3d flex-1 pointer-events-auto">

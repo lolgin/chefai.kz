@@ -11,7 +11,7 @@
 import React, { ReactNode } from 'react';
 import { useSettings } from '../../contexts/SettingsContext';
 
-export type ModuleType = 'none' | 'nodes' | 'discovery' | 'themes' | 'models';
+export type ModuleType = 'none' | 'nodes' | 'discovery' | 'themes' | 'models' | 'streams' | 'engine';
 
 interface ModuleSwitcherProps {
   activeModule: ModuleType;
@@ -31,30 +31,22 @@ export const ModuleSwitcher: React.FC<ModuleSwitcherProps> = ({
   const { theme } = useSettings();
   
   return (
-    <div className="absolute top-6 left-1/2 -translate-x-1/2 flex gap-4 lg:gap-8 z-40">
+    <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-40 bg-black/5 backdrop-blur-2xl rounded-full px-3 py-2 border border-white/10">
       {modules.map(nav => (
         <button
           key={nav.id}
           onClick={() => onModuleChange(nav.id as ModuleType)}
-          className="group flex flex-col items-center gap-2 transition-all"
+          className="transition-all p-2 rounded-full"
           style={{
             color: activeModule === nav.id ? theme.accent : theme.text,
-            opacity: activeModule === nav.id ? 1 : 0.2,
-            transform: activeModule === nav.id ? 'scale(1.1)' : 'scale(1)'
+            opacity: activeModule === nav.id ? 1 : 0.3,
+            backgroundColor: activeModule === nav.id ? `${theme.accent}20` : 'transparent'
           }}
-          onMouseEnter={e => activeModule !== nav.id && (e.currentTarget.style.opacity = '1')}
-          onMouseLeave={e => activeModule !== nav.id && (e.currentTarget.style.opacity = '0.2')}
+          onMouseEnter={e => activeModule !== nav.id && (e.currentTarget.style.opacity = '0.6')}
+          onMouseLeave={e => activeModule !== nav.id && (e.currentTarget.style.opacity = '0.3')}
+          title={nav.label}
         >
-          <div
-            className="p-3 rounded-2xl transition-all shadow-xl"
-            style={{
-              backgroundColor: activeModule === nav.id ? theme.accent : theme.surface,
-              color: activeModule === nav.id ? (theme.isLight ? '#fff' : '#fff') : theme.text
-            }}
-          >
-            {nav.icon}
-          </div>
-          <span className="text-[7px] font-black tracking-[0.2em]">{nav.label}</span>
+          {nav.icon}
         </button>
       ))}
     </div>

@@ -26,6 +26,7 @@ interface ShardCloudProps {
   theme: { accent: string };
   onResetPositions?: () => void;
   fontSize?: 'xs' | 'sm' | 'md' | 'lg' | 'xl' | 'xxl';
+  showIcons?: boolean;
 }
 
 export const ShardCloud: React.FC<ShardCloudProps> = ({
@@ -37,7 +38,8 @@ export const ShardCloud: React.FC<ShardCloudProps> = ({
   onDragEnd,
   theme,
   onResetPositions,
-  fontSize = 'lg'
+  fontSize = 'lg',
+  showIcons = true
 }) => {
   // Мапинг размеров шрифта
   const fontSizeMap = {
@@ -223,6 +225,9 @@ export const ShardCloud: React.FC<ShardCloudProps> = ({
           const customPos = customPositions.get(fullName);
           const position = customPos || { x: shard.x, y: shard.y, z: shard.z };
           
+          // ВАЖНО: DraggableTag не используется для CSS3D облака
+          // потому что absolute positioning ломает translate3d transforms
+          // Вместо этого используем существующую систему перетаскивания
           return (
             <div
               key={i}
@@ -240,6 +245,7 @@ export const ShardCloud: React.FC<ShardCloudProps> = ({
               }}
               onMouseDown={(e) => {
                 // Левая кнопка - начало перетаскивания тега
+                // Работает всегда, независимо от editMode
                 if (e.button === 0) {
                   e.stopPropagation();
                   setDraggedShard(i);
@@ -248,16 +254,30 @@ export const ShardCloud: React.FC<ShardCloudProps> = ({
               }}
             >
               <span
-                className="font-black uppercase tracking-widest block select-none"
+                className="shard-label font-black uppercase tracking-widest block select-none flex items-center gap-2"
+                data-item={JSON.stringify(shard.data)}
                 style={{
                   fontSize: `${shard.size * fontScale}rem`,
                   color: i % 5 === 0 ? theme.accent : 'inherit',
                   opacity: 0.15 + (position.z + 340) / 680,
                   transition: 'none',
                   whiteSpace: 'nowrap',
-                  pointerEvents: 'none'
+                  pointerEvents: 'auto'
                 }}
               >
+                {showIcons && (shard.data.favicon || shard.data.icon) && (
+                  <img 
+                    src={shard.data.favicon || shard.data.icon} 
+                    alt="" 
+                    className="inline-block"
+                    style={{ 
+                      width: `${shard.size * fontScale * 0.8}rem`, 
+                      height: `${shard.size * fontScale * 0.8}rem`,
+                      opacity: 0.8
+                    }}
+                    onError={(e) => (e.currentTarget.style.display = 'none')}
+                  />
+                )}
                 {displayText}
               </span>
             </div>

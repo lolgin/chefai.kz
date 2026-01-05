@@ -49,58 +49,59 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
   return (
     <div className="flex items-center gap-8 lg:gap-14">
       <IconButton
-        icon={<SkipBack size={28} />}
+        icon={<SkipBack size={18} />}
         onClick={onPrev}
         title="Previous"
       />
       
       <button
         onClick={onTogglePlay}
-        className="w-16 h-16 rounded-[2.2rem] bg-indigo-600 text-white flex items-center justify-center shadow-2xl hover:scale-110 active:scale-95 transition-all border-4 border-white/20"
+        className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-xl text-white flex items-center justify-center hover:bg-white/20 active:scale-95 transition-all border border-white/20"
       >
         {isLoading ? (
-          <Loader2 size={24} className="animate-spin" />
+          <Loader2 size={16} className="animate-spin" />
         ) : isPlaying ? (
-          <Pause size={30} fill="currentColor" />
+          <Pause size={16} fill="currentColor" />
         ) : (
-          <Play size={30} fill="currentColor" className="ml-1" />
+          <Play size={16} fill="currentColor" className="ml-0.5" />
         )}
       </button>
       
       <IconButton
-        icon={<SkipForward size={28} />}
+        icon={<SkipForward size={18} />}
         onClick={onNext}
         title="Next"
       />
       
       <button
         onClick={onToggleShuffle}
-        className={`p-3 rounded-xl transition-all ${
+        className={`p-2 rounded-lg transition-all backdrop-blur-xl ${
           isShuffleMode
-            ? 'bg-indigo-600 text-white shadow-xl'
-            : 'opacity-20 hover:opacity-100'
+            ? 'bg-white/20 text-white border border-white/30'
+            : 'bg-white/5 text-white/30 hover:text-white/50 border border-white/10'
         }`}
+        title="Shuffle"
       >
-        <Shuffle size={20} />
+        <Shuffle size={16} />
       </button>
       
       {onResetPositions && (
         <button
           onClick={onResetPositions}
-          className="p-3 rounded-xl transition-all opacity-20 hover:opacity-100"
+          className="p-2 rounded-lg bg-white/5 backdrop-blur-xl border border-white/10 transition-all opacity-30 hover:opacity-100"
           title="Reset Cloud Positions"
         >
-          <RefreshCw size={20} />
+          <RefreshCw size={16} />
         </button>
       )}
       
       {onChangeLayout && (
         <button
           onClick={onChangeLayout}
-          className="p-3 rounded-xl transition-all opacity-20 hover:opacity-100"
+          className="p-2 rounded-lg bg-white/5 backdrop-blur-xl border border-white/10 transition-all opacity-30 hover:opacity-100"
           title={`Layout: ${currentLayout}`}
         >
-          <span className="text-xl">{layoutIcons[currentLayout]}</span>
+          <span className="text-base">{layoutIcons[currentLayout]}</span>
         </button>
       )}
     </div>
