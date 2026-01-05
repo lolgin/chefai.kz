@@ -517,8 +517,8 @@ const AppContent: React.FC = () => {
           </button>
         </div>
 
+        {/* Stage - полный экран с облаком и панелями поверх */}
         <div className="flex-1 flex flex-col relative overflow-hidden">
-          {/* Stage - полный экран */}
             {/* Module Nav */}
             <ModuleSwitcher
               activeModule={activeModule}
