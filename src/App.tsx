@@ -635,21 +635,17 @@ const AppContent: React.FC = () => {
     addLog(`Colors randomized (seed: ${randomSeed})`, 'info');
   };
   
+  // Двусторонняя синхронизация тегов и строки поиска
   const handleToggleSearchTag = (tag: string) => {
     setSelectedSearchTags(prev => {
-      const newTags = prev.includes(tag)
-        ? prev.filter(t => t !== tag) // Удалить
-        : [...prev, tag]; // Добавить
-      
-      // Обновить поисковый запрос на основе выбранных тегов
-      if (newTags.length > 0) {
-        const query = newTags.join(' ');
-        setSearchQuery(query);
-        instantSearch(query);
+      let newTags;
+      if (prev.includes(tag)) {
+        newTags = prev.filter(t => t !== tag);
       } else {
-        setSearchQuery('');
+        newTags = [...prev, tag];
       }
-      
+      setSearchQuery(newTags.join(' '));
+      instantSearch(newTags.join(' '));
       return newTags;
     });
   };
@@ -1007,7 +1003,7 @@ const AppContent: React.FC = () => {
         </div>
 
         {/* Master Footer Module - стеклянная прозрачная панель */}
-        <div className="h-16 md:h-20 border-t flex items-center justify-between px-4 md:px-8 bg-black/5 backdrop-blur-2xl z-[300]" style={{ borderColor: `${theme.text}08` }}>
+        <div className="h-20 md:h-24 border-t flex items-center justify-between px-4 md:px-8 bg-black/5 backdrop-blur-2xl z-[300]" style={{ borderColor: `${theme.text}08` }}>
           {/* Feed Metadata */}
           <TrackInfo metadata={metadata} onCopyMetadata={copyMetadata} />
           
@@ -1038,7 +1034,14 @@ const AppContent: React.FC = () => {
                 <input
                   type="text"
                   value={searchQuery}
-                  onChange={e => setSearchQuery(e.target.value)}
+                  onChange={e => {
+                    const val = e.target.value;
+                    setSearchQuery(val);
+                    // Синхронизируем selectedSearchTags
+                    const tags = Array.from(new Set(val.split(' ').map(t => t.trim()).filter(Boolean)));
+                    setSelectedSearchTags(tags);
+                    instantSearch(val);
+                  }}
                   placeholder="Search..."
                   className="w-32 px-3 py-1.5 pr-8 text-xs rounded-full bg-black/5 backdrop-blur-xl border transition-all focus:w-48 focus:bg-black/10 outline-none"
                   style={{ 
@@ -1080,19 +1083,20 @@ const AppContent: React.FC = () => {
             
             {/* Track Metadata Tags - чипы для множественного поиска */}
             {activeModule === 'discovery' && currentStreamShards.length > 0 && (
-              <div className="flex flex-wrap gap-1.5 max-w-md">
+              <div className="flex flex-wrap gap-2 max-w-2xl py-1">
                 {currentStreamShards.map((tag, idx) => {
                   const isSelected = selectedSearchTags.includes(tag);
                   return (
                     <button
                       key={idx}
                       onClick={() => handleToggleSearchTag(tag)}
-                      className="px-2 py-0.5 text-[10px] rounded-full transition-all duration-200 border backdrop-blur-xl"
+                      className="px-4 py-1 text-[14px] rounded-full transition-all duration-200 border backdrop-blur-xl font-bold shadow-sm"
                       style={{
                         backgroundColor: isSelected ? theme.accent : `${theme.accent}10`,
                         borderColor: isSelected ? theme.accent : `${theme.accent}30`,
                         color: isSelected ? '#fff' : theme.text,
-                        opacity: isSelected ? 1 : 0.6
+                        opacity: isSelected ? 1 : 0.7,
+                        letterSpacing: '0.02em'
                       }}
                     >
                       {tag}
