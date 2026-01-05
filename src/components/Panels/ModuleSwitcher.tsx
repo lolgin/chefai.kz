@@ -6,9 +6,11 @@
  * - Кнопки для каждого модуля
  * - Индикация активного модуля
  * - Иконки модулей
+ * - Кнопка рандомизации цветов
  */
 
 import React, { ReactNode } from 'react';
+import { Dices } from 'lucide-react';
 import { useSettings } from '../../contexts/SettingsContext';
 
 export type ModuleType = 'none' | 'nodes' | 'discovery' | 'themes' | 'models' | 'streams' | 'engine';
@@ -21,12 +23,14 @@ interface ModuleSwitcherProps {
     icon: ReactNode;
     label: string;
   }>;
+  onRandomizeColors?: () => void;
 }
 
 export const ModuleSwitcher: React.FC<ModuleSwitcherProps> = ({
   activeModule,
   onModuleChange,
-  modules
+  modules,
+  onRandomizeColors
 }) => {
   const { theme } = useSettings();
   
@@ -49,6 +53,25 @@ export const ModuleSwitcher: React.FC<ModuleSwitcherProps> = ({
           {nav.icon}
         </button>
       ))}
+      
+      {onRandomizeColors && (
+        <>
+          <div className="w-px h-8 my-auto bg-white/10" />
+          <button
+            onClick={onRandomizeColors}
+            className="transition-all p-2 rounded-full hover:scale-110"
+            style={{
+              color: theme.accent,
+              opacity: 0.5
+            }}
+            onMouseEnter={e => (e.currentTarget.style.opacity = '1')}
+            onMouseLeave={e => (e.currentTarget.style.opacity = '0.5')}
+            title="Случайные цвета"
+          >
+            <Dices size={20} />
+          </button>
+        </>
+      )}
     </div>
   );
 };

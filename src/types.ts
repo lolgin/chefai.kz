@@ -151,6 +151,7 @@ export interface DisplaySettings {
   show3DLabels?: boolean; // Показывать текстовые метки на 3D планетах
   limitTagLength?: boolean; // Ограничивать длину названий до 3 слов
   maxTagWords?: number; // Максимальное количество слов в названии (по умолчанию 3)
+  colorSeed?: number; // Seed для генерации случайных цветов (0-360)
 }
 
 export interface ModuleCustomization {

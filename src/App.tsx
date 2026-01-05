@@ -136,9 +136,14 @@ const AppContent: React.FC = () => {
 
     const handlePointerDown = (e: PointerEvent) => {
       const target = e.target as HTMLElement;
-      // Проверяем что это тег облака
-      if (target.classList.contains('shard-label') || target.closest('.shard-label')) {
-        const labelEl = target.classList.contains('shard-label') ? target : target.closest('.shard-label') as HTMLElement;
+      // Проверяем что это тег облака (CSS3D или WebGL метки)
+      if (target.classList.contains('shard-label') || 
+          target.classList.contains('shard-label-3d') || 
+          target.closest('.shard-label') || 
+          target.closest('.shard-label-3d')) {
+        const labelEl = target.classList.contains('shard-label') || target.classList.contains('shard-label-3d')
+          ? target 
+          : (target.closest('.shard-label') || target.closest('.shard-label-3d')) as HTMLElement;
         
         // Получаем данные элемента из data-атрибута
         const dataStr = labelEl?.getAttribute('data-item');
@@ -571,6 +576,20 @@ const AppContent: React.FC = () => {
     }
   };
   
+  const handleRandomizeColors = () => {
+    // Генерируем случайный seed для цветов
+    const randomSeed = Math.floor(Math.random() * 360);
+    // Сохраняем seed в settings для использования в цветовой генерации
+    updateDisplaySettings({ colorSeed: randomSeed });
+    addLog(`Colors randomized (seed: ${randomSeed})`, 'info');
+  };
+  
+  const handleRandomizeColors = () => {
+    const newSeed = Math.floor(Math.random() * 360);
+    updateDisplaySettings({ colorSeed: newSeed });
+    addLog(`Colors: ${newSeed}`, 'info');
+  };
+  
   // Сброс позиций облака
   const handleResetPositions = () => {
     positionCacheRef.current.clear();
@@ -712,6 +731,7 @@ const AppContent: React.FC = () => {
               activeModule={activeModule}
               onModuleChange={toggleModule}
               modules={modules}
+              onRandomizeColors={handleRandomizeColors}
             />
 
             {/* Background 3D Shards - выбор движка рендеринга */}
@@ -820,6 +840,7 @@ const AppContent: React.FC = () => {
                 rotation={rotation}
                 shards={mainCloudShards}
                 use3DModels={true}
+                moduleType={activeModule}
                 onShardClick={(item) => {
                   console.log('🔥 Main Cloud Click - Module:', activeModule, 'Type:', typeof item, 'Data:', item);
                   

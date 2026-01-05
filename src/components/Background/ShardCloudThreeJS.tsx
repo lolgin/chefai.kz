@@ -33,6 +33,7 @@ interface ShardCloudThreeJSProps {
   onDragEnd: () => void;
   theme: { accent: string };
   use3DModels?: boolean; // Enable 3D model loading
+  moduleType?: string; // Тип модуля для определения цвета
 }
 
 export const ShardCloudThreeJS: React.FC<ShardCloudThreeJSProps> = ({
@@ -40,10 +41,35 @@ export const ShardCloudThreeJS: React.FC<ShardCloudThreeJSProps> = ({
   shards,
   onShardClick,
   theme,
-  use3DModels = false
+  use3DModels = false,
+  moduleType = 'streams'
 }) => {
   const { editMode, layouts, registerElement, updateLayout } = useLayout();
   const { settings } = useSettings();
+  
+  // Функция определения цвета планеты по модулю на основе темы
+  const getPlanetColorByModule = (moduleType: string, index: number) => {
+    // Базовый цвет из темы
+    const baseHue = parseInt(theme.accent.replace('#', ''), 16) % 360;
+    
+    // Seed для рандомизации
+    const colorSeed = settings.display?.colorSeed || 0;
+    
+    // Смещение для разных типов модулей
+    const moduleHueShift: Record<string, number> = {
+      'streams': 0,      // Основной цвет темы
+      'discovery': 60,   // +60° на цветовом круге
+      'nodes': 120,      // +120°
+      'themes': 180,     // +180° (комплементарный)
+      'models': 240,     // +240°
+      'engine': 300      // +300°
+    };
+    
+    const hueShift = moduleHueShift[moduleType] || 0;
+    const finalHue = (baseHue + hueShift + colorSeed + (index * 30)) % 360;
+    
+    return new THREE.Color(`hsl(${finalHue}, 65%, 55%)`);
+  };
   
   // Визуализация провайдеров больше не используется
   // Все позиции приходят через shards prop (кешированные в App.tsx)
@@ -230,16 +256,37 @@ export const ShardCloudThreeJS: React.FC<ShardCloudThreeJSProps> = ({
     const radius = shard.size * 15 * scale;
     const geometry = new THREE.SphereGeometry(radius, 32, 32);
     
-    const hue = (index * 137.5) % 360;
-    const color = new THREE.Color(`hsl(${hue}, 70%, 60%)`);
+    // Используем цветовую схему на основе темы и типа модуля
+    const color = getPlanetColorByModule(moduleType, index);
     
-    const material = new THREE.MeshStandardMaterial({
-      color,
-      roughness: 0.7,
-      metalness: 0.3,
-      emissive: color,
-      emissiveIntensity: 0.2
-    });
+    // Если есть favicon/icon - загружаем текстуру
+    const faviconUrl = shard.data?.favicon || shard.data?.icon;
+    let material: THREE.MeshStandardMaterial;
+    
+    if (faviconUrl) {
+      const textureLoader = new THREE.TextureLoader();
+      material = new THREE.MeshStandardMaterial({
+        color: new THREE.Color(0xffffff),
+        map: textureLoader.load(faviconUrl, undefined, undefined, () => {
+          // Fallback на цвет при ошибке
+          material.map = null;
+          material.color = color;
+          material.needsUpdate = true;
+        }),
+        roughness: 0.5,
+        metalness: 0.2,
+        emissive: color,
+        emissiveIntensity: 0.1
+      });
+    } else {
+      material = new THREE.MeshStandardMaterial({
+        color,
+        roughness: 0.7,
+        metalness: 0.3,
+        emissive: color,
+        emissiveIntensity: 0.2
+      });
+    }
 
     const mesh = new THREE.Mesh(geometry, material);
     mesh.position.set(x, y, z);
@@ -269,23 +316,24 @@ export const ShardCloudThreeJS: React.FC<ShardCloudThreeJSProps> = ({
         labelDiv.className = 'shard-label-3d shard-label';
         labelDiv.setAttribute('data-item', JSON.stringify(shard.data));
         labelDiv.style.cssText = `
-          color: rgba(255, 255, 255, 0.9);
-          font-size: ${Math.max(12, shard.size * 8)}px;
-          font-weight: 500;
-          text-shadow: 0 0 8px rgba(0, 0, 0, 0.8), 0 2px 4px rgba(0, 0, 0, 0.6);
-          padding: 4px 8px;
-          background: transparent;
-          border-radius: 4px;
-          backdrop-filter: blur(4px);
+          color: rgba(255, 255, 255, 0.95);
+          font-size: ${Math.max(8, shard.size * 5)}px;
+          font-weight: 700;
+          text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+          padding: 0;
+          background: none;
+          border: none;
           white-space: nowrap;
           pointer-events: auto;
           user-select: none;
           cursor: pointer;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
         `;
         labelDiv.textContent = labelText;
 
         const labelObject = new CSS3DObject(labelDiv);
-        labelObject.position.set(x, y + radius + 20, z); // Position above sphere
+        labelObject.position.set(x, y + radius + 8, z); // Ближе к сфере
         css3DSceneRef.current.add(labelObject);
       }
     }

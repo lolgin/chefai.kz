@@ -11,6 +11,7 @@
 
 import { useState, useEffect } from 'react';
 import { searchStreams, DiscoveredStream } from '../services/streamDiscovery';
+import { useSettings } from '../contexts/SettingsContext';
 
 interface UseStreamDiscoveryOptions {
   isInitialized: boolean;
@@ -18,6 +19,7 @@ interface UseStreamDiscoveryOptions {
 }
 
 export const useStreamDiscovery = ({ isInitialized, onLog }: UseStreamDiscoveryOptions) => {
+  const { isBlacklisted } = useSettings();
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
   const [suggestions, setSuggestions] = useState<DiscoveredStream[]>([]);
@@ -35,7 +37,15 @@ export const useStreamDiscovery = ({ isInitialized, onLog }: UseStreamDiscoveryO
       
       try {
         const results = await searchStreams(searchQuery);
-        setSuggestions(results);
+        // Фильтруем черный список
+        const filtered = results.filter(stream => {
+          const url = stream.url || stream.url_resolved;
+          return url && !isBlacklisted(url);
+        });
+        setSuggestions(filtered);
+        if (filtered.length < results.length) {
+          onLog?.(`Filtered ${results.length - filtered.length} blacklisted`, 'warn');
+        }
       } catch (e) {
         onLog?.('Sync Interrupted', 'error');
       } finally {
