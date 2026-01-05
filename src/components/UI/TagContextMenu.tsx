@@ -3,11 +3,11 @@
  * 
  * Универсальное контекстное меню для всех тегов
  * Активируется долгим удержанием (2 сек)
- * Содержит: Сохранить, Изменить, Удалить
+ * Содержит: Сохранить, Изменить, Удалить, Настройки отображения
  */
 
 import React from 'react';
-import { Edit2, Trash2, Save, Copy, X, Eye, EyeOff } from 'lucide-react';
+import { Edit2, Trash2, Save, Copy, X, Eye, EyeOff, Type, Tag } from 'lucide-react';
 
 interface TagContextMenuProps {
   isVisible: boolean;
@@ -19,9 +19,14 @@ interface TagContextMenuProps {
   onDelete?: (item: any) => void;
   onCopy?: (item: any) => void;
   onToggleIcon?: (item: any) => void;
+  onToggleLabels?: () => void;
+  onToggleLimitLength?: () => void;
   onClose: () => void;
+  onBan?: (item: any) => void;
   theme: { text: string; accent: string };
   showIcons?: boolean;
+  show3DLabels?: boolean;
+  limitTagLength?: boolean;
 }
 
 export const TagContextMenu: React.FC<TagContextMenuProps> = ({
@@ -34,9 +39,14 @@ export const TagContextMenu: React.FC<TagContextMenuProps> = ({
   onDelete,
   onCopy,
   onToggleIcon,
+  onToggleLabels,
+  onToggleLimitLength,
+  onBan,
   onClose,
   theme,
-  showIcons = true
+  showIcons = true,
+  show3DLabels = true,
+  limitTagLength = true
 }) => {
   if (!isVisible) return null;
 
@@ -45,6 +55,7 @@ export const TagContextMenu: React.FC<TagContextMenuProps> = ({
   const canEdit = ['streams', 'nodes'].includes(moduleType);
   const canDelete = ['streams', 'nodes'].includes(moduleType);
   const canCopy = true; // Копировать можно всегда
+  const canBan = ['discovery', 'streams'].includes(moduleType); // Можно забанить потоки
 
   return (
     <>
@@ -129,6 +140,45 @@ export const TagContextMenu: React.FC<TagContextMenuProps> = ({
             style={{ color: theme.text }}
           >
             {showIcons ? <EyeOff size={14} /> : <Eye size={14} />} {showIcons ? 'Скрыть' : 'Показать'} обложку
+          </button>
+        )}
+        
+        {onToggleLabels && (
+          <button
+            onClick={() => {
+              onToggleLabels();
+              onClose();
+            }}
+            className="w-full flex items-center gap-2 px-3 py-2 text-xs font-medium rounded hover:bg-blue-500/20 transition-all"
+            style={{ color: theme.text }}
+          >
+            {show3DLabels ? <EyeOff size={14} /> : <Eye size={14} />} {show3DLabels ? 'Скрыть' : 'Показать'} метки 3D
+          </button>
+        )}
+        
+        {onToggleLimitLength && (
+          <button
+            onClick={() => {
+              onToggleLimitLength();
+              onClose();
+            }}
+            className="w-full flex items-center gap-2 px-3 py-2 text-xs font-medium rounded hover:bg-purple-500/20 transition-all"
+            style={{ color: theme.text }}
+          >
+            <Type size={14} /> {limitTagLength ? 'Полные' : 'Короткие'} названия
+          </button>
+        )}
+        
+        {canBan && onBan && (
+          <button
+            onClick={() => {
+              onBan(item);
+              onClose();
+            }}
+            className="w-full flex items-center gap-2 px-3 py-2 text-xs font-medium rounded hover:bg-red-500/20 transition-all"
+            style={{ color: theme.text }}
+          >
+            <Trash2 size={14} /> Забанить поток
           </button>
         )}
         

@@ -11,7 +11,7 @@
  */
 
 import React, { createContext, useContext, useState, useEffect, ReactNode, useMemo } from 'react';
-import { AppSettings, ThemeScheme, CustomNode, FavoriteNode, DisplaySettings } from '../types';
+import { AppSettings, ThemeScheme, CustomNode, FavoriteNode, DisplaySettings, BlacklistedStream } from '../types';
 import { THEMES } from '../constants';
 
 interface SettingsContextType {
@@ -24,6 +24,9 @@ interface SettingsContextType {
   addFavorite: (node: FavoriteNode) => void;
   removeFavorite: (url: string) => void;
   updateDisplaySettings: (updates: Partial<DisplaySettings>) => void;
+  addToBlacklist: (url: string, reason?: BlacklistedStream['reason']) => void;
+  removeFromBlacklist: (url: string) => void;
+  isBlacklisted: (url: string) => boolean;
 }
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
@@ -40,6 +43,8 @@ const DEFAULT_SETTINGS: AppSettings = {
   customNodes: [],
   favorites: [],
   blacklist: [],
+  blacklistedStreams: [],
+  searchCache: [],
   display: {
     fontSize: 'lg',
     iconSize: 'lg',
@@ -53,6 +58,9 @@ const DEFAULT_SETTINGS: AppSettings = {
     spacing: 'normal',
     visualizationProvider: undefined, // Провайдер визуализации отключен по умолчанию
     visualizationEnabled: true, // Визуализация включена по умолчанию
+    show3DLabels: true, // Показывать метки на 3D планетах
+    limitTagLength: true, // Ограничивать длину названий
+    maxTagWords: 3, // До 3 слов
     cloudSettings: {
       viewMode: 'cloud',
       cloudScale: 1.0,
@@ -66,7 +74,7 @@ const DEFAULT_SETTINGS: AppSettings = {
   moduleCustomizations: []
 };
 
-const STORAGE_KEY = 'aurawave_v29_settings';
+const STORAGE_KEY = 'aurawave_v30_settings'; // Увеличена версия для новых полей
 
 export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [settings, setSettings] = useState<AppSettings>(() => {
@@ -137,6 +145,35 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
     }));
   };
 
+  const addToBlacklist = (url: string, reason?: BlacklistedStream['reason']) => {
+    setSettings(prev => {
+      const blacklistedStreams = prev.blacklistedStreams || [];
+      // Проверяем, нет ли уже в списке
+      if (blacklistedStreams.some(b => b.url === url)) {
+        return prev;
+      }
+      return {
+        ...prev,
+        blacklistedStreams: [
+          ...blacklistedStreams,
+          { url, reason: reason || 'user_ban', timestamp: Date.now() }
+        ]
+      };
+    });
+  };
+
+  const removeFromBlacklist = (url: string) => {
+    setSettings(prev => ({
+      ...prev,
+      blacklistedStreams: (prev.blacklistedStreams || []).filter(b => b.url !== url)
+    }));
+  };
+
+  const isBlacklisted = (url: string): boolean => {
+    const blacklistedStreams = settings.blacklistedStreams || [];
+    return blacklistedStreams.some(b => b.url === url);
+  };
+
   const value: SettingsContextType = {
     settings,
     theme,
@@ -146,7 +183,10 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
     addCustomNode,
     removeCustomNode,
     addFavorite,
-    removeFavorite
+    removeFavorite,
+    addToBlacklist,
+    removeFromBlacklist,
+    isBlacklisted
   };
 
   return <SettingsContext.Provider value={value}>{children}</SettingsContext.Provider>;

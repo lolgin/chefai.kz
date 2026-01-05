@@ -190,7 +190,7 @@ const AppContent: React.FC = () => {
 
   // Используем хуки и контексты
   const { systemLogs, addLog } = useSystemLogs();
-  const { settings, theme, updateSettings, updateDisplaySettings } = useSettings();
+  const { settings, theme, updateSettings, updateDisplaySettings, addToBlacklist, removeFromBlacklist, isBlacklisted } = useSettings();
   const { metadata, statusMessage, updateMetadata, fetchAIMetadata } = useMetadata();
   
   const {
@@ -538,6 +538,26 @@ const AppContent: React.FC = () => {
   const handleToggleIcon = (item: any) => {
     setShowStreamIcons(prev => !prev);
     addLog(showStreamIcons ? 'Icons hidden' : 'Icons shown', 'info');
+  };
+  
+  const handleToggleLabels = () => {
+    const newValue = !settings.display?.show3DLabels;
+    updateDisplaySettings({ show3DLabels: newValue });
+    addLog(newValue ? '3D labels shown' : '3D labels hidden', 'info');
+  };
+  
+  const handleToggleLimitLength = () => {
+    const newValue = !settings.display?.limitTagLength;
+    updateDisplaySettings({ limitTagLength: newValue });
+    addLog(newValue ? 'Short names' : 'Full names', 'info');
+  };
+  
+  const handleBanStream = (item: any) => {
+    const url = item.url || item.streamUrl || item.url_resolved;
+    if (url) {
+      addToBlacklist(url, 'user_ban');
+      addLog(`Banned: ${item.name || url}`, 'warning');
+    }
   };
   
   // Сброс позиций облака
@@ -961,9 +981,14 @@ const AppContent: React.FC = () => {
         onDelete={handleDeleteItem}
         onCopy={handleCopyItem}
         onToggleIcon={handleToggleIcon}
+        onToggleLabels={handleToggleLabels}
+        onToggleLimitLength={handleToggleLimitLength}
+        onBan={handleBanStream}
         onClose={() => setContextMenu({ visible: false, position: { x: 0, y: 0 }, item: null })}
         theme={theme}
         showIcons={showStreamIcons}
+        show3DLabels={settings.display?.show3DLabels !== false}
+        limitTagLength={settings.display?.limitTagLength !== false}
       />
       
       {/* Диалог редактирования */}

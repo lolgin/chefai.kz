@@ -9,6 +9,7 @@
  */
 
 import React, { useRef, useState, useEffect } from 'react';
+import { useSettings } from '../../contexts/SettingsContext';
 
 interface ShardCloudProps {
   rotation: { x: number; y: number };
@@ -41,6 +42,8 @@ export const ShardCloud: React.FC<ShardCloudProps> = ({
   fontSize = 'lg',
   showIcons = true
 }) => {
+  const { settings } = useSettings();
+  
   // Мапинг размеров шрифта
   const fontSizeMap = {
     xs: 0.5,
@@ -51,6 +54,9 @@ export const ShardCloud: React.FC<ShardCloudProps> = ({
     xxl: 1.7
   };
   const fontScale = fontSizeMap[fontSize];
+  
+  const limitTagLength = settings.display?.limitTagLength !== false;
+  const maxWords = settings.display?.maxTagWords || 3;
   
   const containerRef = useRef<HTMLDivElement>(null);
   const [localRotation, setLocalRotation] = useState({ x: 0, y: 0 });
@@ -215,10 +221,15 @@ export const ShardCloud: React.FC<ShardCloudProps> = ({
             ? shard.data 
             : (shard.data?.name || shard.data?.title || shard.data?.url || `item_${i}`);
           
-          // Извлекаем текст для отображения (обрезанный)
+          // Извлекаем текст для отображения
           let displayText = fullName;
-          if (displayText.length > 12) {
-            displayText = displayText.substring(0, 12).toUpperCase();
+          
+          // Ограничить длину до N слов (если включено)
+          if (limitTagLength && displayText) {
+            const words = displayText.split(' ');
+            if (words.length > maxWords) {
+              displayText = words.slice(0, maxWords).join(' ') + '...';
+            }
           }
           
           // Проверяем есть ли пользовательская позиция по ПОЛНОМУ имени

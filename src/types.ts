@@ -148,6 +148,9 @@ export interface DisplaySettings {
   visualizationProvider?: string; // Провайдер визуализации (из VisualizationProvider enum)
   visualizationEnabled?: boolean; // Включена ли визуализация (по умолчанию true)
   tagModel?: string; // ID 3D модели для тегов (из models.ts)
+  show3DLabels?: boolean; // Показывать текстовые метки на 3D планетах
+  limitTagLength?: boolean; // Ограничивать длину названий до 3 слов
+  maxTagWords?: number; // Максимальное количество слов в названии (по умолчанию 3)
 }
 
 export interface ModuleCustomization {
@@ -159,12 +162,26 @@ export interface ModuleCustomization {
   visible?: boolean;
 }
 
+export interface BlacklistedStream {
+  url: string;
+  reason?: 'low_bitrate' | 'not_working' | 'irrelevant' | 'user_ban';
+  timestamp: number;
+}
+
+export interface SearchCacheEntry {
+  query: string;
+  results: RadioStation[];
+  timestamp: number;
+}
+
 export interface AppSettings {
   themeId: string;
   equalizer: EqualizerSettings;
   customNodes: CustomNode[];
   favorites: FavoriteNode[];
-  blacklist: string[];
+  blacklist: string[]; // Legacy: simple URLs
+  blacklistedStreams?: BlacklistedStream[]; // New: URLs with reasons
+  searchCache?: SearchCacheEntry[]; // Кеш результатов поиска
   display?: DisplaySettings;
   moduleCustomizations?: ModuleCustomization[];
 }

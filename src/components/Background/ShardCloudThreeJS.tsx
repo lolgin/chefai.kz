@@ -15,6 +15,7 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { CSS3DRenderer, CSS3DObject } from 'three/examples/jsm/renderers/CSS3DRenderer.js';
 import { useLayout } from '../../contexts/LayoutContext';
+import { useSettings } from '../../contexts/SettingsContext';
 
 interface ShardCloudThreeJSProps {
   rotation: { x: number; y: number };
@@ -42,6 +43,7 @@ export const ShardCloudThreeJS: React.FC<ShardCloudThreeJSProps> = ({
   use3DModels = false
 }) => {
   const { editMode, layouts, registerElement, updateLayout } = useLayout();
+  const { settings } = useSettings();
   
   // Визуализация провайдеров больше не используется
   // Все позиции приходят через shards prop (кешированные в App.tsx)
@@ -244,32 +246,48 @@ export const ShardCloudThreeJS: React.FC<ShardCloudThreeJSProps> = ({
     objectsRef.current.set(mesh, shard.data);
     scene.add(mesh);
 
-    // Create text label with CSS3D
-    const labelText = typeof shard.data === 'string' 
-      ? shard.data 
-      : (shard.data?.name || shard.data?.title || shard.data?.url || '');
+    // Create text label with CSS3D (if enabled)
+    const show3DLabels = settings.display?.show3DLabels !== false;
+    const limitTagLength = settings.display?.limitTagLength !== false;
+    const maxWords = settings.display?.maxTagWords || 3;
     
-    if (labelText && css3DSceneRef.current) {
-      const labelDiv = document.createElement('div');
-      labelDiv.className = 'shard-label-3d';
-      labelDiv.style.cssText = `
-        color: rgba(255, 255, 255, 0.9);
-        font-size: ${Math.max(12, shard.size * 8)}px;
-        font-weight: 500;
-        text-shadow: 0 0 8px rgba(0, 0, 0, 0.8), 0 2px 4px rgba(0, 0, 0, 0.6);
-        padding: 4px 8px;
-        background: rgba(0, 0, 0, 0.3);
-        border-radius: 4px;
-        backdrop-filter: blur(4px);
-        white-space: nowrap;
-        pointer-events: none;
-        user-select: none;
-      `;
-      labelDiv.textContent = labelText;
+    if (show3DLabels && css3DSceneRef.current) {
+      let labelText = typeof shard.data === 'string' 
+        ? shard.data 
+        : (shard.data?.name || shard.data?.title || shard.data?.url || '');
+      
+      // Ограничить длину до N слов
+      if (limitTagLength && labelText) {
+        const words = labelText.split(' ');
+        if (words.length > maxWords) {
+          labelText = words.slice(0, maxWords).join(' ') + '...';
+        }
+      }
+      
+      if (labelText) {
+        const labelDiv = document.createElement('div');
+        labelDiv.className = 'shard-label-3d shard-label';
+        labelDiv.setAttribute('data-item', JSON.stringify(shard.data));
+        labelDiv.style.cssText = `
+          color: rgba(255, 255, 255, 0.9);
+          font-size: ${Math.max(12, shard.size * 8)}px;
+          font-weight: 500;
+          text-shadow: 0 0 8px rgba(0, 0, 0, 0.8), 0 2px 4px rgba(0, 0, 0, 0.6);
+          padding: 4px 8px;
+          background: transparent;
+          border-radius: 4px;
+          backdrop-filter: blur(4px);
+          white-space: nowrap;
+          pointer-events: auto;
+          user-select: none;
+          cursor: pointer;
+        `;
+        labelDiv.textContent = labelText;
 
-      const labelObject = new CSS3DObject(labelDiv);
-      labelObject.position.set(x, y + radius + 20, z); // Position above sphere
-      css3DSceneRef.current.add(labelObject);
+        const labelObject = new CSS3DObject(labelDiv);
+        labelObject.position.set(x, y + radius + 20, z); // Position above sphere
+        css3DSceneRef.current.add(labelObject);
+      }
     }
   };
 
