@@ -79,6 +79,9 @@ const AppContent: React.FC = () => {
   const [isEngineDropdownOpen, setIsEngineDropdownOpen] = useState(false);
   const [showStreamIcons, setShowStreamIcons] = useState(true);
   
+  // Выбранные теги для множественного поиска
+  const [selectedSearchTags, setSelectedSearchTags] = useState<string[]>([]);
+  
   // Контекстное меню для тегов
   const [contextMenu, setContextMenu] = useState<{
     visible: boolean;
@@ -249,10 +252,15 @@ const AppContent: React.FC = () => {
   // Обработчик события для добавления слова в поиск (Shift+Click на тег)
   useEffect(() => {
     const handleAppendSearch = (e: CustomEvent) => {
-      const newQuery = e.detail.query;
-      setSearchQuery(newQuery);
-      setActiveModule('discovery');
-      instantSearch(newQuery);
+      const { query, switchModule = true } = e.detail;
+      const words = query.split(' ').filter((w: string) => w.trim());
+      const firstWord = words[0];
+      
+      setSearchQuery(firstWord);
+      if (switchModule) {
+        setActiveModule('discovery');
+      }
+      instantSearch(firstWord);
     };
     
     window.addEventListener('appendSearchQuery', handleAppendSearch as EventListener);
@@ -589,6 +597,10 @@ const AppContent: React.FC = () => {
     const url = item.url || item.streamUrl || item.url_resolved;
     if (url) {
       addToBlacklist(url, 'user_ban');
+      // Удаляем из текущих результатов
+      setSuggestions(prev => prev.filter(s => 
+        (s.url || s.streamUrl || s.url_resolved) !== url
+      ));
       addLog(`Banned: ${item.name || url}`, 'warn');
     }
   };
@@ -599,6 +611,25 @@ const AppContent: React.FC = () => {
     // Сохраняем seed в settings для использования в цветовой генерации
     updateDisplaySettings({ colorSeed: randomSeed });
     addLog(`Colors randomized (seed: ${randomSeed})`, 'info');
+  };
+  
+  const handleToggleSearchTag = (tag: string) => {
+    setSelectedSearchTags(prev => {
+      const newTags = prev.includes(tag)
+        ? prev.filter(t => t !== tag) // Удалить
+        : [...prev, tag]; // Добавить
+      
+      // Обновить поисковый запрос на основе выбранных тегов
+      if (newTags.length > 0) {
+        const query = newTags.join(' ');
+        setSearchQuery(query);
+        instantSearch(query);
+      } else {
+        setSearchQuery('');
+      }
+      
+      return newTags;
+    });
   };
   
   // Сброс позиций облака
@@ -959,26 +990,52 @@ const AppContent: React.FC = () => {
           <TrackInfo metadata={metadata} onCopyMetadata={copyMetadata} />
           
           {/* Compact Search - упрощенный, без лишних кнопок */}
-          <div className="flex items-center gap-2">
-            {/* Compact Search Input - упрощенный */}
-            <div className="relative hidden md:block">
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={e => setSearchQuery(e.target.value)}
-                placeholder="Search..."
-                className="w-32 px-3 py-1.5 pr-8 text-xs rounded-full bg-black/5 backdrop-blur-xl border transition-all focus:w-48 focus:bg-black/10 outline-none"
-                style={{ 
-                  borderColor: activeModule === 'discovery' ? theme.accent : `${theme.text}10`,
-                  color: theme.text
-                }}
-              />
-              <Search 
-                size={14} 
-                className="absolute right-2 top-1/2 -translate-y-1/2 opacity-30 pointer-events-none"
-                style={{ color: theme.text }}
-              />
+          <div className="flex flex-col items-start gap-2">
+            <div className="flex items-center gap-2">
+              {/* Compact Search Input - упрощенный */}
+              <div className="relative hidden md:block">
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={e => setSearchQuery(e.target.value)}
+                  placeholder="Search..."
+                  className="w-32 px-3 py-1.5 pr-8 text-xs rounded-full bg-black/5 backdrop-blur-xl border transition-all focus:w-48 focus:bg-black/10 outline-none"
+                  style={{ 
+                    borderColor: activeModule === 'discovery' ? theme.accent : `${theme.text}10`,
+                    color: theme.text
+                  }}
+                />
+                <Search 
+                  size={14} 
+                  className="absolute right-2 top-1/2 -translate-y-1/2 opacity-30 pointer-events-none"
+                  style={{ color: theme.text }}
+                />
+              </div>
             </div>
+            
+            {/* Track Metadata Tags - чипы для множественного поиска */}
+            {activeModule === 'discovery' && currentStreamShards.length > 0 && (
+              <div className="flex flex-wrap gap-1.5 max-w-md">
+                {currentStreamShards.map((tag, idx) => {
+                  const isSelected = selectedSearchTags.includes(tag);
+                  return (
+                    <button
+                      key={idx}
+                      onClick={() => handleToggleSearchTag(tag)}
+                      className="px-2 py-0.5 text-[10px] rounded-full transition-all duration-200 border backdrop-blur-xl"
+                      style={{
+                        backgroundColor: isSelected ? theme.accent : `${theme.accent}10`,
+                        borderColor: isSelected ? theme.accent : `${theme.accent}30`,
+                        color: isSelected ? '#fff' : theme.text,
+                        opacity: isSelected ? 1 : 0.6
+                      }}
+                    >
+                      {tag}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
           {/* Playback Hub */}

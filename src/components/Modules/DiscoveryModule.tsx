@@ -28,6 +28,8 @@ interface DiscoveryModuleProps {
   isDragging: boolean;
   onDragStart: () => void;
   onDragEnd: () => void;
+  selectedTags?: string[];
+  onToggleTag?: (tag: string) => void;
 }
 
 export const DiscoveryModule: React.FC<DiscoveryModuleProps> = ({
@@ -44,7 +46,9 @@ export const DiscoveryModule: React.FC<DiscoveryModuleProps> = ({
   moduleCloudItems,
   isDragging,
   onDragStart,
-  onDragEnd
+  onDragEnd,
+  selectedTags = [],
+  onToggleTag
 }) => {
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
@@ -77,15 +81,22 @@ export const DiscoveryModule: React.FC<DiscoveryModuleProps> = ({
 
         {/* Теги-фильтры */}
         <div className="flex flex-wrap gap-2 px-4">
-          {currentStreamShards.map(tag => (
-            <button
-              key={tag}
-              onClick={() => onSearchQueryChange(tag)}
-              className="px-5 py-2 bg-indigo-600/5 rounded-2xl text-[10px] font-black uppercase border border-indigo-600/10 hover:bg-indigo-600 hover:text-white transition-all"
-            >
-              # {tag}
-            </button>
-          ))}
+          {currentStreamShards.map(tag => {
+            const isSelected = selectedTags.includes(tag);
+            return (
+              <button
+                key={tag}
+                onClick={() => onToggleTag ? onToggleTag(tag) : onSearchQueryChange(tag)}
+                className={`px-5 py-2 rounded-2xl text-[10px] font-black uppercase border transition-all ${
+                  isSelected
+                    ? 'bg-indigo-600 text-white border-indigo-600'
+                    : 'bg-indigo-600/5 border-indigo-600/10 hover:bg-indigo-600/20'
+                }`}
+              >
+                # {tag}
+              </button>
+            );
+          })}
         </div>
       </div>
 

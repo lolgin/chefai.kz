@@ -23,24 +23,64 @@ export const useStreamDiscovery = ({ isInitialized, onLog, blacklistedUrls = [] 
   const [isSearching, setIsSearching] = useState(false);
   const [suggestions, setSuggestions] = useState<DiscoveredStream[]>([]);
   const [sortBy, setSortBy] = useState<'quality' | 'name' | 'favicon'>('quality');
+  const [searchCache] = useState<Map<string, DiscoveredStream[]>>(new Map());
 
   // Реактивный поиск с задержкой
   useEffect(() => {
     if (!isInitialized) return;
     
     const triggerSearch = async () => {
-      if (searchQuery.trim().length < 2) return;
+      if (searchQuery.trim().length < 2) {
+        setSuggestions([]);
+        return;
+      }
       
       setIsSearching(true);
-      onLog?.(`Query Broadcasting: ${searchQuery}`, 'info');
+      
+      // Разбиваем на слова
+      const words = searchQuery.split(' ').filter(w => w.trim().length >= 2);
+      
+      if (words.length === 0) {
+        setSuggestions([]);
+        setIsSearching(false);
+        return;
+      }
+      
+      onLog?.(`Query Broadcasting: ${words.join(', ')}`, 'info');
       
       try {
-        const results = await searchStreams(searchQuery);
-        // Фильтруем по черному списку
-        const filtered = results.filter(stream => 
-          !blacklistedUrls.includes(stream.url || stream.streamUrl || stream.url_resolved || '')
-        );
-        setSuggestions(filtered);
+        const allResults: DiscoveredStream[] = [];
+        const seenUrls = new Set<string>();
+        
+        // Ищем каждое слово отдельно
+        for (const word of words) {
+          let results: DiscoveredStream[];
+          
+          // Проверяем кеш
+          if (searchCache.has(word)) {
+            results = searchCache.get(word)!;
+            onLog?.(`Cache hit: ${word}`, 'info');
+          } else {
+            results = await searchStreams(word);
+            // Кешируем (макс 50 запросов)
+            if (searchCache.size >= 50) {
+              const firstKey = searchCache.keys().next().value;
+              searchCache.delete(firstKey);
+            }
+            searchCache.set(word, results);
+          }
+          
+          // Добавляем с дедупликацией
+          for (const stream of results) {
+            const url = stream.url || stream.streamUrl || stream.url_resolved || '';
+            if (!seenUrls.has(url) && !blacklistedUrls.includes(url)) {
+              seenUrls.add(url);
+              allResults.push(stream);
+            }
+          }
+        }
+        
+        setSuggestions(allResults);
       } catch (e) {
         onLog?.('Sync Interrupted', 'error');
       } finally {

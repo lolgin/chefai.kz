@@ -251,7 +251,13 @@ export const ShardCloud: React.FC<ShardCloudProps> = ({
               onClick={(e) => {
                 // Клик только если не было перетаскивания
                 if (!isRightDragging && draggedShard === null) {
-                  onShardClick(shard.data);
+                  if (e.shiftKey || e.ctrlKey) {
+                    // Shift+Click - добавить к поиску без переключения
+                    const text = typeof shard.data === 'string' ? shard.data : (shard.data?.name || shard.data?.title || '');
+                    window.dispatchEvent(new CustomEvent('appendSearchQuery', { detail: { query: text, switchModule: false } }));
+                  } else {
+                    onShardClick(shard.data);
+                  }
                 }
               }}
               onMouseDown={(e) => {
@@ -273,7 +279,21 @@ export const ShardCloud: React.FC<ShardCloudProps> = ({
                   opacity: 0.15 + (position.z + 340) / 680,
                   transition: 'none',
                   whiteSpace: 'nowrap',
-                  pointerEvents: 'auto'
+                  pointerEvents: 'auto',
+                  cursor: 'pointer'
+                }}
+                onClick={(e) => {
+                  if (e.shiftKey || e.ctrlKey) {
+                    e.stopPropagation();
+                    // Добавить слово к существующему поиску
+                    const currentQuery = (document.querySelector('input[type="search"]') as HTMLInputElement)?.value || '';
+                    const words = currentQuery.split(' ').filter(w => w.trim());
+                    if (!words.includes(fullName)) {
+                      words.push(fullName);
+                      const newQuery = words.join(' ');
+                      window.dispatchEvent(new CustomEvent('appendSearchQuery', { detail: { query: newQuery } }));
+                    }
+                  }
                 }}
               >
                 {showIcons && (shard.data.favicon || shard.data.icon) && (
