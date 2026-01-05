@@ -116,12 +116,12 @@ export const LeftPanel: React.FC<LeftPanelProps> = ({
       onWheel={(e) => e.stopPropagation()} // Изолируем скролл панели
     >
       <div 
-        className="p-10 w-[480px] h-full overflow-y-auto no-scrollbar space-y-10"
+        className="p-6 md:p-10 w-full min-w-[280px] max-w-[480px] h-full overflow-y-auto no-scrollbar space-y-6 md:space-y-10"
         onWheel={(e) => e.stopPropagation()} // Изолируем скролл списка
       >
-        <h3 className="text-[24px] font-black uppercase tracking-widest flex items-center gap-5"
+        <h3 className="text-lg md:text-[24px] font-black uppercase tracking-widest flex items-center gap-3 md:gap-5"
             style={{ color: theme.text }}>
-          <Hexagon size={32} /> NEURAL_CORE
+          <Hexagon className="w-6 h-6 md:w-8 md:h-8" /> NEURAL_CORE
         </h3>
         
         {providers.map(p => {

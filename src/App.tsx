@@ -432,37 +432,36 @@ const AppContent: React.FC = () => {
         
         {/* Header OS Bar */}
         <div 
-          className="w-full h-16 border-b flex items-center z-50" 
+          className="w-full h-12 md:h-16 border-b flex items-center z-50" 
           style={{ 
             ...glassStyle,
             borderColor: `${theme.text}11`,
             backgroundColor: settings.display?.glassEffect ? theme.surface : 'rgba(0,0,0,0.05)'
           }}
         >
-          <button onClick={() => setIsLeftPanelOpen(!isLeftPanelOpen)} className="h-full px-5 border-r hover:bg-black/10 transition-all" style={{ borderColor: `${theme.text}11` }}>
-            <List size={18} />
+          <button onClick={() => setIsLeftPanelOpen(!isLeftPanelOpen)} className="h-full px-3 md:px-5 border-r hover:bg-black/10 transition-all" style={{ borderColor: `${theme.text}11` }}>
+            <List className="w-4 h-4 md:w-[18px] md:h-[18px]" />
           </button>
           
           {/* Компактный селектор движка */}
           <div className="relative h-full border-r" style={{ borderColor: `${theme.text}11` }}>
             <button
               onClick={() => setIsEngineDropdownOpen(!isEngineDropdownOpen)}
-              className="h-full px-4 hover:bg-black/10 transition-all flex items-center gap-2"
+              className="h-full px-3 md:px-4 hover:bg-black/10 transition-all flex items-center gap-1 md:gap-2"
               title="Render Engine"
             >
-              <span className="text-xl">
+              <span className="text-base md:text-xl">
                 {RENDER_ENGINES.find(e => e.id === (settings.display?.renderEngine || RenderEngine.THREEJS))?.icon || '🎨'}
               </span>
               <ChevronDown 
-                size={14} 
-                className="transition-transform"
+                className="w-3 h-3 md:w-[14px] md:h-[14px] transition-transform"
                 style={{ transform: isEngineDropdownOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}
               />
             </button>
             
             {isEngineDropdownOpen && (
               <div 
-                className="absolute top-full left-0 mt-1 py-2 rounded-lg bg-black/95 backdrop-blur-xl border shadow-xl z-50 min-w-[280px]"
+                className="absolute top-full left-0 mt-1 py-2 rounded-lg bg-black/95 backdrop-blur-xl border shadow-xl z-50 w-64 md:min-w-[280px]"
                 style={{ borderColor: `${theme.text}22` }}
               >
                 {RENDER_ENGINES.map(engine => {
@@ -512,8 +511,8 @@ const AppContent: React.FC = () => {
               </span>
             </div>
           </div>
-          <button onClick={() => setIsRightPanelOpen(!isRightPanelOpen)} className="h-full px-5 border-l hover:bg-black/10 transition-all" style={{ borderColor: `${theme.text}11` }} title="Custom Streams">
-            <Radio size={18} />
+          <button onClick={() => setIsRightPanelOpen(!isRightPanelOpen)} className="h-full px-3 md:px-5 border-l hover:bg-black/10 transition-all" style={{ borderColor: `${theme.text}11` }} title="Custom Streams">
+            <Radio className="w-4 h-4 md:w-[18px] md:h-[18px]" />
           </button>
         </div>
 
@@ -731,7 +730,7 @@ const AppContent: React.FC = () => {
         </div>
 
         {/* Master Footer Module */}
-        <div className="h-28 border-t flex items-center justify-between px-10 bg-black/5 z-[300] backdrop-blur-3xl" style={{ borderColor: `${theme.text}11` }}>
+        <div className="h-20 md:h-28 border-t flex items-center justify-between px-4 md:px-10 bg-black/5 z-[300] backdrop-blur-3xl" style={{ borderColor: `${theme.text}11` }}>
           {/* Feed Metadata */}
           <TrackInfo metadata={metadata} onCopyMetadata={copyMetadata} />
           
@@ -818,13 +817,13 @@ const AppContent: React.FC = () => {
             </div>
             
             {/* Compact Search Input */}
-            <div className="relative">
+            <div className="relative hidden md:block">
               <input
                 type="text"
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
                 placeholder="Search stations..."
-                className="w-64 px-4 py-2 pr-10 text-sm rounded-full bg-black/20 backdrop-blur-xl border transition-all focus:w-96 focus:bg-black/40 outline-none"
+                className="w-48 md:w-64 px-3 md:px-4 py-2 pr-8 md:pr-10 text-xs md:text-sm rounded-full bg-black/20 backdrop-blur-xl border transition-all focus:w-64 md:focus:w-96 focus:bg-black/40 outline-none"
                 style={{ 
                   borderColor: activeModule === 'discovery' ? theme.accent : `${theme.text}22`,
                   color: theme.text
@@ -858,7 +857,7 @@ const AppContent: React.FC = () => {
           </div>
 
           {/* Controls & Volume */}
-          <div className="w-1/4 flex items-center justify-end gap-6">
+          <div className="flex-shrink-0 flex items-center justify-end gap-3 md:gap-6">
             <VolumeControl volume={audioState.volume} onVolumeChange={setVolume} />
             <button
               onClick={() => toggleModule('discovery')}
