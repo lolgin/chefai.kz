@@ -9,10 +9,9 @@
  */
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Hexagon, Globe, Orbit, Edit2, Trash2, Check, X, MoreVertical, ChevronDown } from 'lucide-react';
+import { Hexagon, Globe, Orbit, Edit2, Trash2, Check, X, MoreVertical } from 'lucide-react';
 import { Provider, CustomNode } from '../../types';
 import { useSettings } from '../../contexts/SettingsContext';
-import { RENDER_ENGINES, RenderEngine } from '../../constants/renderEngines';
 
 interface LeftPanelProps {
   isOpen: boolean;
@@ -41,9 +40,7 @@ export const LeftPanel: React.FC<LeftPanelProps> = ({
   onAddNode,
   theme
 }) => {
-  const { settings, updateDisplaySettings } = useSettings();
-  const currentEngine = settings.display?.renderEngine || RenderEngine.THREEJS;
-  const [isEngineDropdownOpen, setIsEngineDropdownOpen] = useState(false);
+  const { settings } = useSettings();
   
   const [editingNode, setEditingNode] = useState<CustomNode | null>(null);
   const [editName, setEditName] = useState('');
@@ -51,7 +48,6 @@ export const LeftPanel: React.FC<LeftPanelProps> = ({
   const [contextMenuNode, setContextMenuNode] = useState<CustomNode | null>(null);
   const [longPressTimer, setLongPressTimer] = useState<NodeJS.Timeout | null>(null);
   const contextMenuRef = useRef<HTMLDivElement>(null);
-  const engineDropdownRef = useRef<HTMLDivElement>(null);
   
   // Закрытие контекстного меню при клике вне его
   useEffect(() => {
@@ -66,20 +62,6 @@ export const LeftPanel: React.FC<LeftPanelProps> = ({
       return () => document.removeEventListener('mousedown', handleClickOutside);
     }
   }, [contextMenuNode]);
-  
-  // Закрытие dropdown движков при клике ВНЕ его
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (engineDropdownRef.current && !engineDropdownRef.current.contains(event.target as Node)) {
-        setIsEngineDropdownOpen(false);
-      }
-    };
-    
-    if (isEngineDropdownOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-      return () => document.removeEventListener('mousedown', handleClickOutside);
-    }
-  }, [isEngineDropdownOpen]);
   
   const handleStartEdit = (node: CustomNode) => {
     setEditingNode(node);
@@ -129,7 +111,7 @@ export const LeftPanel: React.FC<LeftPanelProps> = ({
 
   return (
     <div
-      className="hidden lg:flex transition-all duration-500 border-r bg-black/5 flex-col overflow-hidden"
+      className="hidden lg:flex transition-all duration-500 border-r bg-black/30 backdrop-blur-md flex-col overflow-hidden"
       style={{ borderColor: `${theme.text}11`, width: isOpen ? '480px' : '0' }}
       onWheel={(e) => e.stopPropagation()} // Изолируем скролл панели
     >
@@ -141,109 +123,6 @@ export const LeftPanel: React.FC<LeftPanelProps> = ({
             style={{ color: theme.text }}>
           <Hexagon size={32} /> NEURAL_CORE
         </h3>
-        
-        {/* Dropdown для выбора движка рендеринга - STICKY */}
-        <div className="sticky top-0 z-10 bg-black/80 backdrop-blur-xl pb-6 -mt-2" ref={engineDropdownRef}>
-          <button
-            onClick={() => setIsEngineDropdownOpen(!isEngineDropdownOpen)}
-            className="w-full flex items-center justify-between px-6 py-5 rounded-xl bg-black/20 hover:bg-black/30 transition-all border-2"
-            style={{ borderColor: `${theme.text}22`, color: theme.text }}
-          >
-            <div className="flex items-center gap-5">
-              <span className="text-5xl">
-                {RENDER_ENGINES.find(e => e.id === currentEngine)?.icon || '🎨'}
-              </span>
-              <div className="text-left">
-                <div className="text-[22px] font-black uppercase tracking-wider">
-                  {RENDER_ENGINES.find(e => e.id === currentEngine)?.name || 'Three.js'}
-                </div>
-                <div className="text-[16px] opacity-50">
-                  {RENDER_ENGINES.find(e => e.id === currentEngine)?.performance || 'medium'}
-                </div>
-              </div>
-            </div>
-            <ChevronDown 
-              size={32} 
-              className="transition-transform"
-              style={{ transform: isEngineDropdownOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}
-            />
-          </button>
-          
-          {/* Dropdown menu */}
-          {isEngineDropdownOpen && (
-            <div 
-              className="absolute top-full left-0 right-0 mt-1 py-1 rounded-lg bg-black/95 backdrop-blur-xl border shadow-xl z-50 max-h-80 overflow-y-auto"
-              style={{ borderColor: `${theme.text}22` }}
-              onClick={(e) => e.stopPropagation()} // Не закрывать при клике внутри
-            >
-              {RENDER_ENGINES.map(engine => {
-                const isActive = currentEngine === engine.id;
-                const isAvailable = engine.id === RenderEngine.CSS3D || engine.id === RenderEngine.THREEJS; // Пока доступны только эти
-                
-                return (
-                  <button
-                    key={engine.id}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      if (isAvailable) {
-                        updateDisplaySettings({ renderEngine: engine.id });
-                      }
-                    }}
-                    disabled={!isAvailable}
-                    className="w-full px-6 py-5 flex items-start gap-5 hover:bg-white/10 transition-all text-left rounded-lg relative"
-                    style={{
-                      backgroundColor: isActive ? `${theme.text}15` : 'transparent',
-                      opacity: isAvailable ? 1 : 0.3,
-                      cursor: isAvailable ? 'pointer' : 'not-allowed'
-                    }}
-                  >
-                    {/* Интерактивная пиктограмма с hover эффектом */}
-                    <span 
-                      className="text-4xl mt-1 transition-transform hover:scale-110 active:scale-95"
-                      style={{ 
-                        cursor: isAvailable ? 'pointer' : 'not-allowed',
-                        filter: isActive ? 'brightness(1.3)' : 'brightness(1)'
-                      }}
-                    >
-                      {engine.icon}
-                    </span>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3">
-                        <span className="text-[22px] font-black uppercase tracking-wider" style={{ color: theme.text }}>
-                          {engine.name}
-                        </span>
-                        {!isAvailable && (
-                          <span className="text-[14px] px-3 py-1.5 rounded-lg bg-yellow-500/20 text-yellow-400 font-bold">
-                            SOON
-                          </span>
-                        )}
-                        {isActive && (
-                          <span className="text-[14px] px-3 py-1.5 rounded-lg font-bold" style={{ backgroundColor: theme.text + '20', color: theme.text }}>
-                            ACTIVE
-                          </span>
-                        )}
-                      </div>
-                      <div className="text-[16px] opacity-60 mt-2" style={{ color: theme.text }}>
-                        {engine.description}
-                      </div>
-                      <div className="flex flex-wrap gap-2 mt-3">
-                        {engine.features.slice(0, 3).map((feat, i) => (
-                          <span 
-                            key={i} 
-                            className="text-[13px] px-3 py-1.5 rounded"
-                            style={{ backgroundColor: `${theme.text}10`, color: theme.text }}
-                          >
-                            {feat}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-          )}
-        </div>
         
         {providers.map(p => {
           const genres = p.id === Provider.CUSTOM
