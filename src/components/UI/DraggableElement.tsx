@@ -15,6 +15,9 @@ interface DraggableElementProps {
   style?: React.CSSProperties;
   showHandle?: boolean; // Показывать ручку для перетаскивания
   resizable?: boolean; // Можно ли менять размер
+  defaultPanel?: 'left' | 'right' | 'top' | 'bottom' | 'float';
+  defaultSize?: { width: number; height: number };
+  defaultPosition?: { x: number; y: number };
 }
 
 export const DraggableElement: React.FC<DraggableElementProps> = ({
@@ -23,18 +26,36 @@ export const DraggableElement: React.FC<DraggableElementProps> = ({
   className = '',
   style = {},
   showHandle = true,
-  resizable = false
+  resizable = true,
+  defaultPanel = 'float',
+  defaultSize,
+  defaultPosition
 }) => {
-  const { layouts, updateLayout, isDragging, setIsDragging, isResizing, setIsResizing } = useLayout();
-  const layout = layouts[id];
+  const { layouts, updateLayout, isDragging, setIsDragging, isResizing, setIsResizing, editMode, registerElement } = useLayout();
   const containerRef = useRef<HTMLDivElement>(null);
   const [dragStart, setDragStart] = useState<{ x: number; y: number } | null>(null);
   const [resizeStart, setResizeStart] = useState<{ x: number; y: number; width: number; height: number } | null>(null);
 
+  // Автоматическая регистрация элемента при монтировании
+  useEffect(() => {
+    registerElement(id, {
+      panel: defaultPanel,
+      size: defaultSize,
+      position: defaultPosition
+    });
+  }, [id]);
+
+  const layout = layouts[id];
+
   if (!layout || !layout.visible) return null;
 
+  // Проверка режима редактирования
+  const canMove = editMode === 'move' || editMode === 'full';
+  const canResize = editMode === 'resize' || editMode === 'full';
+  const isEditMode = editMode !== 'normal';
+
   const handleDragStart = (e: React.MouseEvent) => {
-    if (layout.locked) return;
+    if (layout.locked || !canMove) return;
     e.stopPropagation();
     
     setIsDragging(id);
@@ -42,7 +63,7 @@ export const DraggableElement: React.FC<DraggableElementProps> = ({
   };
 
   const handleResizeStart = (e: React.MouseEvent) => {
-    if (layout.locked) return;
+    if (layout.locked || !canResize) return;
     e.stopPropagation();
     e.preventDefault();
     
@@ -135,11 +156,11 @@ export const DraggableElement: React.FC<DraggableElementProps> = ({
   return (
     <div
       ref={containerRef}
-      className={`${className} ${isDragging === id ? 'opacity-80 z-[100]' : ''}`}
+      className={`${className} ${isDragging === id ? 'opacity-80 z-[100]' : ''} ${isEditMode ? 'ring-2 ring-purple-500/30' : ''}`}
       style={containerStyle}
       data-draggable-id={id}
     >
-      {showHandle && !layout.locked && (
+      {showHandle && !layout.locked && canMove && (
         <div
           className="absolute top-1 left-1 p-1 cursor-grab hover:bg-white/10 rounded opacity-0 hover:opacity-100 transition-opacity z-10"
           onMouseDown={handleDragStart}
@@ -151,7 +172,7 @@ export const DraggableElement: React.FC<DraggableElementProps> = ({
 
       {children}
 
-      {resizable && !layout.locked && (
+      {resizable && !layout.locked && canResize && (
         <div
           className="absolute bottom-0 right-0 p-1 cursor-nwse-resize hover:bg-white/10 rounded opacity-0 hover:opacity-100 transition-opacity"
           onMouseDown={handleResizeStart}

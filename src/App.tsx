@@ -87,7 +87,7 @@ const AppContent: React.FC = () => {
   const { systemLogs, addLog } = useSystemLogs();
   const { settings, theme, updateSettings, updateDisplaySettings } = useSettings();
   const { metadata, statusMessage, updateMetadata, fetchAIMetadata } = useMetadata();
-  const { layouts, resetLayout } = useLayout();
+  const { layouts, resetLayout, editMode, setEditMode } = useLayout();
   
   const {
     searchQuery,
@@ -754,14 +754,44 @@ const AppContent: React.FC = () => {
           {/* Layout Edit Mode UI */}
           {isLayoutEditMode && (
             <div className="absolute top-6 left-6 z-50 bg-black/90 backdrop-blur-xl rounded-lg p-4 border" style={{ borderColor: `${theme.accent}40` }}>
-              <div className="text-xs font-bold uppercase mb-2" style={{ color: theme.accent }}>
+              <div className="text-xs font-bold uppercase mb-3" style={{ color: theme.accent }}>
                 🎨 РЕЖИМ РЕДАКТИРОВАНИЯ
               </div>
-              <div className="text-[10px] opacity-70 mb-3 space-y-1" style={{ color: theme.text }}>
-                <div>• Наведите на панель - появятся ручки</div>
-                <div>• Тяните за ручку для перемещения</div>
-                <div>• Тяните за угол для изменения размера</div>
+              
+              {/* Селектор режима */}
+              <div className="mb-3 space-y-2">
+                <div className="text-[10px] opacity-50 mb-1" style={{ color: theme.text }}>РЕЖИМ:</div>
+                {[
+                  { value: 'normal', label: 'ВЫКЛ', icon: '⚫' },
+                  { value: 'move', label: 'ПЕРЕМЕЩЕНИЕ', icon: '🔀' },
+                  { value: 'resize', label: 'РАЗМЕР', icon: '📏' },
+                  { value: 'full', label: 'ПОЛНЫЙ', icon: '✨' }
+                ].map(mode => (
+                  <button
+                    key={mode.value}
+                    onClick={() => setEditMode(mode.value as any)}
+                    className={`w-full px-3 py-1.5 text-[10px] font-bold uppercase rounded transition-all ${
+                      editMode === mode.value ? 'bg-purple-600' : 'bg-white/5 hover:bg-white/10'
+                    }`}
+                    style={{ color: theme.text }}
+                  >
+                    {mode.icon} {mode.label}
+                  </button>
+                ))}
               </div>
+              
+              <div className="text-[10px] opacity-70 mb-3 space-y-1" style={{ color: theme.text }}>
+                {editMode === 'move' && <div>• Только перемещение элементов</div>}
+                {editMode === 'resize' && <div>• Только изменение размера</div>}
+                {editMode === 'full' && (
+                  <>
+                    <div>• Наведите на панель - появятся ручки</div>
+                    <div>• Тяните за ручку для перемещения</div>
+                    <div>• Тяните за угол для изменения размера</div>
+                  </>
+                )}
+              </div>
+              
               <button
                 onClick={() => {
                   resetLayout();
@@ -776,8 +806,51 @@ const AppContent: React.FC = () => {
           )}
 
           {/* Абсолютно позиционированные панели поверх облака */}
-          {isLayoutEditMode ? (
-            <DraggableElement id="streams-list" showHandle={true} resizable={true}>
+          {editMode !== 'normal' || isLayoutEditMode ? (
+            <>
+              <DraggableElement 
+                id="streams-list" 
+                showHandle={true} 
+                resizable={true}
+                defaultPanel="left"
+                defaultSize={{ width: 480, height: 600 }}
+              >
+                <LeftPanel
+                  isOpen={isLeftPanelOpen}
+                  providers={PROVIDERS}
+                  genresByProvider={GENRES_BY_PROVIDER}
+                  customNodes={settings.customNodes}
+                  currentGenre={audioState.currentGenre}
+                  onGenreClick={handleGenreClick}
+                  getGenreUrl={getGenreUrl}
+                  theme={theme}
+                  onDeleteNode={handleDeleteNode}
+                  onEditNode={handleEditNode}
+                  onAddNode={handleAddNode}
+                />
+              </DraggableElement>
+
+              <DraggableElement 
+                id="custom-nodes" 
+                showHandle={true} 
+                resizable={true}
+                defaultPanel="right"
+                defaultSize={{ width: 320, height: 600 }}
+              >
+                <RightPanel
+                  isOpen={isRightPanelOpen}
+                  customNodes={settings.customNodes}
+                  currentGenre={audioState.currentGenre}
+                  onGenreClick={handleGenreClick}
+                  onEditNode={handleEditNode}
+                  onDeleteNode={handleDeleteNode}
+                  onAddNode={handleAddNode}
+                  theme={theme}
+                />
+              </DraggableElement>
+            </>
+          ) : (
+            <>
               <LeftPanel
                 isOpen={isLeftPanelOpen}
                 providers={PROVIDERS}
@@ -791,26 +864,7 @@ const AppContent: React.FC = () => {
                 onEditNode={handleEditNode}
                 onAddNode={handleAddNode}
               />
-            </DraggableElement>
-          ) : (
-            <LeftPanel
-              isOpen={isLeftPanelOpen}
-              providers={PROVIDERS}
-              genresByProvider={GENRES_BY_PROVIDER}
-              customNodes={settings.customNodes}
-              currentGenre={audioState.currentGenre}
-              onGenreClick={handleGenreClick}
-              getGenreUrl={getGenreUrl}
-              theme={theme}
-              onDeleteNode={handleDeleteNode}
-              onEditNode={handleEditNode}
-              onAddNode={handleAddNode}
-            />
-          )}
 
-          {/* Right Panel - Custom Streams */}
-          {isLayoutEditMode ? (
-            <DraggableElement id="custom-nodes" showHandle={true} resizable={true}>
               <RightPanel
                 isOpen={isRightPanelOpen}
                 customNodes={settings.customNodes}
@@ -821,18 +875,7 @@ const AppContent: React.FC = () => {
                 onAddNode={handleAddNode}
                 theme={theme}
               />
-            </DraggableElement>
-          ) : (
-            <RightPanel
-              isOpen={isRightPanelOpen}
-              customNodes={settings.customNodes}
-              currentGenre={audioState.currentGenre}
-              onGenreClick={handleGenreClick}
-              onEditNode={handleEditNode}
-              onDeleteNode={handleDeleteNode}
-              onAddNode={handleAddNode}
-              theme={theme}
-            />
+            </>
           )}
         </div>
 

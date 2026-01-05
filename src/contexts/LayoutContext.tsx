@@ -19,6 +19,8 @@ export interface ElementLayout {
   maxSize?: { width: number; height: number };
 }
 
+export type LayoutEditMode = 'normal' | 'move' | 'resize' | 'full'; // Режимы редактирования
+
 interface LayoutContextValue {
   layouts: Record<string, ElementLayout>;
   updateLayout: (id: string, updates: Partial<ElementLayout>) => void;
@@ -28,6 +30,9 @@ interface LayoutContextValue {
   setIsDragging: (id: string | null) => void;
   isResizing: string | null;
   setIsResizing: (id: string | null) => void;
+  editMode: LayoutEditMode;
+  setEditMode: (mode: LayoutEditMode) => void;
+  registerElement: (id: string, defaults?: Partial<ElementLayout>) => void; // Автоматическая регистрация
 }
 
 const LayoutContext = createContext<LayoutContextValue | undefined>(undefined);
@@ -97,6 +102,7 @@ export const LayoutProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   const [isDragging, setIsDragging] = useState<string | null>(null);
   const [isResizing, setIsResizing] = useState<string | null>(null);
+  const [editMode, setEditMode] = useState<LayoutEditMode>('normal');
 
   // Сохранение в localStorage
   useEffect(() => {
@@ -112,6 +118,24 @@ export const LayoutProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       ...prev,
       [id]: { ...prev[id], ...updates }
     }));
+  };
+
+  // Автоматическая регистрация элемента при первом рендере
+  const registerElement = (id: string, defaults?: Partial<ElementLayout>) => {
+    if (!layouts[id]) {
+      setLayouts(prev => ({
+        ...prev,
+        [id]: {
+          id,
+          panel: 'float',
+          order: Object.keys(prev).length,
+          visible: true,
+          minSize: { width: 100, height: 50 },
+          maxSize: { width: 800, height: 600 },
+          ...defaults
+        }
+      }));
+    }
   };
 
   const moveElement = (id: string, targetPanel: ElementLayout['panel'], targetOrder?: number) => {
@@ -155,7 +179,10 @@ export const LayoutProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       isDragging,
       setIsDragging,
       isResizing,
-      setIsResizing
+      setIsResizing,
+      editMode,
+      setEditMode,
+      registerElement
     }}>
       {children}
     </LayoutContext.Provider>
