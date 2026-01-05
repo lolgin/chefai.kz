@@ -466,6 +466,7 @@ const AppContent: React.FC = () => {
             theme={theme}
             onDeleteNode={handleDeleteNode}
             onEditNode={handleEditNode}
+            onAddNode={handleAddNode}
           />
 
           {/* Stage */}

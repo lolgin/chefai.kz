@@ -24,6 +24,7 @@ interface LeftPanelProps {
   getGenreUrl: (genre: string | any, provider: Provider | string) => string | undefined;
   onEditNode?: (oldNode: CustomNode, newNode: CustomNode) => void;
   onDeleteNode?: (node: CustomNode) => void;
+  onAddNode?: (node: CustomNode) => void;
   theme: { text: string };
 }
 
@@ -37,6 +38,7 @@ export const LeftPanel: React.FC<LeftPanelProps> = ({
   getGenreUrl,
   onEditNode,
   onDeleteNode,
+  onAddNode,
   theme
 }) => {
   const { settings, updateDisplaySettings } = useSettings();
@@ -262,9 +264,19 @@ export const LeftPanel: React.FC<LeftPanelProps> = ({
                 const name = typeof g === 'string' ? g : g.name;
                 const url = typeof g === 'string' ? getGenreUrl(name, p.id) : g.url;
                 const isCustom = p.id === Provider.CUSTOM;
-                const node = isCustom ? g as CustomNode : null;
-                const isEditing = node && editingNode?.name === node.name && editingNode?.url === node.url;
-                const hasContextMenu = node && contextMenuNode?.name === node.name && contextMenuNode?.url === node.url;
+                
+                // Создаем временный node для любого потока (для UI кнопок)
+                const node: CustomNode = isCustom 
+                  ? g as CustomNode 
+                  : {
+                      id: `${p.id}-${name}`,
+                      name,
+                      url: url || '',
+                      provider: p.id as Provider
+                    };
+                
+                const isEditing = editingNode?.name === node.name && editingNode?.url === node.url;
+                const hasContextMenu = contextMenuNode?.name === node.name && contextMenuNode?.url === node.url;
                 
                 if (isEditing) {
                   return (
@@ -328,26 +340,25 @@ export const LeftPanel: React.FC<LeftPanelProps> = ({
                       >
                         {name}
                       </button>
-                      {isCustom && node && (
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setContextMenuNode(hasContextMenu ? null : node);
-                          }}
-                          className="p-3 rounded-lg hover:bg-white/20 active:bg-white/30 transition-all shrink-0"
-                          style={{ 
-                            color: theme.text, 
-                            opacity: hasContextMenu ? 1 : 0.6,
-                            backgroundColor: hasContextMenu ? 'rgba(255,255,255,0.1)' : 'transparent'
-                          }}
-                          title="Меню управления"
-                        >
-                          <MoreVertical size={32} />
-                        </button>
-                      )}
+                      {/* Кнопка меню для ВСЕХ потоков */}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setContextMenuNode(hasContextMenu ? null : node);
+                        }}
+                        className="p-3 rounded-lg hover:bg-white/20 active:bg-white/30 transition-all shrink-0"
+                        style={{ 
+                          color: theme.text, 
+                          opacity: hasContextMenu ? 1 : 0.6,
+                          backgroundColor: hasContextMenu ? 'rgba(255,255,255,0.1)' : 'transparent'
+                        }}
+                        title="Меню управления"
+                      >
+                        <MoreVertical size={32} />
+                      </button>
                     </div>
                     
-                    {hasContextMenu && node && (
+                    {hasContextMenu && (
                       <div 
                         ref={contextMenuRef}
                         className="absolute right-0 top-full mt-1 bg-black/95 backdrop-blur-sm rounded-lg shadow-2xl border border-white/20 p-1 z-50 min-w-[140px]"
@@ -360,11 +371,21 @@ export const LeftPanel: React.FC<LeftPanelProps> = ({
                           <Edit2 size={13} /> ИЗМЕНИТЬ
                         </button>
                         <button
-                          onClick={() => handleDelete(node)}
+                          onClick={() => {
+                            if (isCustom) {
+                              handleDelete(node);
+                            } else {
+                              // Для встроенных потоков - копируем в User Nodes
+                              if (onAddNode && confirm(`Скопировать "${node.name}" в User Nodes?`)) {
+                                onAddNode(node);
+                                setContextMenuNode(null);
+                              }
+                            }
+                          }}
                           className="w-full flex items-center gap-2 px-3 py-2 text-[10px] font-bold uppercase rounded hover:bg-red-500/40 transition-all"
                           style={{ color: theme.text }}
                         >
-                          <Trash2 size={13} /> УДАЛИТЬ
+                          <Trash2 size={13} /> {isCustom ? 'УДАЛИТЬ' : 'КОПИРОВАТЬ'}
                         </button>
                       </div>
                     )}
