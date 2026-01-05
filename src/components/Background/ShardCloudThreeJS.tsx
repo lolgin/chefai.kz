@@ -11,6 +11,7 @@
 
 import React, { useRef, useEffect } from 'react';
 import * as THREE from 'three';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 
 interface ShardCloudThreeJSProps {
   rotation: { x: number; y: number };
@@ -20,19 +21,22 @@ interface ShardCloudThreeJSProps {
     y: number;
     z: number;
     size: number;
+    model3DUrl?: string; // URL to .glb/.gltf model
   }>;
   onShardClick: (item: any) => void;
   isDragging: boolean;
   onDragStart: () => void;
   onDragEnd: () => void;
   theme: { accent: string };
+  use3DModels?: boolean; // Enable 3D model loading
 }
 
 export const ShardCloudThreeJS: React.FC<ShardCloudThreeJSProps> = ({
   rotation,
   shards,
   onShardClick,
-  theme
+  theme,
+  use3DModels = false
 }) => {
   // Визуализация провайдеров больше не используется
   // Все позиции приходят через shards prop (кешированные в App.tsx)
@@ -41,13 +45,14 @@ export const ShardCloudThreeJS: React.FC<ShardCloudThreeJSProps> = ({
   const sceneRef = useRef<THREE.Scene | null>(null);
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
-  const objectsRef = useRef<Map<THREE.Mesh, any>>(new Map());
+  const objectsRef = useRef<Map<THREE.Mesh | THREE.Group, any>>(new Map());
   const raycasterRef = useRef(new THREE.Raycaster());
   const mouseRef = useRef(new THREE.Vector2());
   const isDraggingRef = useRef(false);
   const mouseDownPosRef = useRef({ x: 0, y: 0 });
   const isRightDraggingRef = useRef(false);
   const lastMousePosRef = useRef({ x: 0, y: 0 });
+  const gltfLoaderRef = useRef<GLTFLoader>(new GLTFLoader());
   const currentRotationRef = useRef({ x: 0, y: 0 });
   
   // Для перетаскивания планет
@@ -128,51 +133,151 @@ export const ShardCloudThreeJS: React.FC<ShardCloudThreeJSProps> = ({
     if (!scene) return;
 
     // Очищаем старые объекты
-    objectsRef.current.forEach((data, mesh) => {
-      scene.remove(mesh);
-      mesh.geometry.dispose();
-      if (Array.isArray(mesh.material)) {
-        mesh.material.forEach(m => m.dispose());
-      } else {
-        mesh.material.dispose();
+    objectsRef.current.forEach((data, obj) => {
+      scene.remove(obj);
+      if (obj instanceof THREE.Mesh) {
+        obj.geometry?.dispose();
+        if (Array.isArray(obj.material)) {
+          obj.material.forEach(m => m.dispose());
+        } else {
+          obj.material?.dispose();
+        }
       }
     });
     objectsRef.current.clear();
 
     // Создаём новые объекты
     shards.forEach((shard, index) => {
-      const itemId = typeof shard.data === 'object' && shard.data?.name ? shard.data.name : String(shard.data);
-      
-      // ВСЕГДА используем КЕШИРОВАННЫЕ позиции из shard (из App.tsx generateCloud)
-      // Это гарантирует стабильность позиций - как в CSS режиме
       const x = shard.x;
       const y = shard.y;
       const z = shard.z;
       const scale = 1.0;
       
-      const radius = shard.size * 15 * scale; // Размер планеты с учетом scale
-      const geometry = new THREE.SphereGeometry(radius, 32, 32);
-      
-      // Цвет от позиции
-      const hue = (index * 137.5) % 360;
-      const color = new THREE.Color(`hsl(${hue}, 70%, 60%)`);
-      
-      const material = new THREE.MeshStandardMaterial({
-        color,
-        roughness: 0.7,
-        metalness: 0.3,
-        emissive: color,
-        emissiveIntensity: 0.2
-      });
-
-      const mesh = new THREE.Mesh(geometry, material);
-      mesh.position.set(x, y, z);
-      
-      // Сохраняем данные
-      objectsRef.current.set(mesh, shard.data);
-      scene.add(mesh);
+      // Проверяем, нужно ли загружать 3D модель
+      if (use3DModels && shard.model3DUrl) {
+        load3DModel(shard, x, y, z, scale, scene, index);
+      } else {
+        // Fallback: обычная сфера
+        createSphere(shard, x, y, z, scale, scene, index);
+      }
     });
-  }, [shards]); // ТОЛЬКО shards - стабильный массив с кешированными позициями
+  }, [shards, use3DModels]);
+
+  // Функция создания сферы (fallback)
+  const createSphere = (
+    shard: any,
+    x: number,
+    y: number,
+    z: number,
+    scale: number,
+    scene: THREE.Scene,
+    index: number
+  ) => {
+    const radius = shard.size * 15 * scale;
+    const geometry = new THREE.SphereGeometry(radius, 32, 32);
+    
+    const hue = (index * 137.5) % 360;
+    const color = new THREE.Color(`hsl(${hue}, 70%, 60%)`);
+    
+    const material = new THREE.MeshStandardMaterial({
+      color,
+      roughness: 0.7,
+      metalness: 0.3,
+      emissive: color,
+      emissiveIntensity: 0.2
+    });
+
+    const mesh = new THREE.Mesh(geometry, material);
+    mesh.position.set(x, y, z);
+    objectsRef.current.set(mesh, shard.data);
+    scene.add(mesh);
+  };
+
+  // Функция загрузки 3D модели
+  const load3DModel = (
+    shard: any,
+    x: number,
+    y: number,
+    z: number,
+    scale: number,
+    scene: THREE.Scene,
+    index: number
+  ) => {
+    const loader = gltfLoaderRef.current;
+    
+    // Обработка primitive:// URL
+    if (shard.model3DUrl.startsWith('primitive://')) {
+      const shape = shard.model3DUrl.replace('primitive://', '');
+      createPrimitive(shape, shard, x, y, z, scale, scene, index);
+      return;
+    }
+
+    // Загрузка GLTF модели
+    loader.load(
+      shard.model3DUrl,
+      (gltf) => {
+        const model = gltf.scene;
+        model.position.set(x, y, z);
+        
+        const desiredSize = shard.size * 30;
+        const bbox = new THREE.Box3().setFromObject(model);
+        const size = bbox.getSize(new THREE.Vector3());
+        const maxDim = Math.max(size.x, size.y, size.z);
+        model.scale.setScalar(desiredSize / maxDim);
+
+        model.traverse((child) => {
+          if (child instanceof THREE.Mesh) {
+            child.material.emissive = new THREE.Color(0x333333);
+            child.material.emissiveIntensity = 0.1;
+          }
+        });
+
+        objectsRef.current.set(model, shard.data);
+        scene.add(model);
+      },
+      undefined,
+      () => createSphere(shard, x, y, z, scale, scene, index)
+    );
+  };
+
+  // Примитивы
+  const createPrimitive = (
+    shape: string,
+    shard: any,
+    x: number,
+    y: number,
+    z: number,
+    scale: number,
+    scene: THREE.Scene,
+    index: number
+  ) => {
+    let geometry: THREE.BufferGeometry;
+    const size = shard.size * 15 * scale;
+
+    switch (shape) {
+      case 'box': geometry = new THREE.BoxGeometry(size, size, size); break;
+      case 'cone': geometry = new THREE.ConeGeometry(size, size * 2, 16); break;
+      case 'cylinder': geometry = new THREE.CylinderGeometry(size, size, size * 2, 16); break;
+      case 'torus': geometry = new THREE.TorusGeometry(size, size * 0.4, 16, 32); break;
+      default: geometry = new THREE.SphereGeometry(size, 32, 32);
+    }
+
+    const hue = (index * 137.5) % 360;
+    const color = new THREE.Color(`hsl(${hue}, 70%, 60%)`);
+    
+    const material = new THREE.MeshStandardMaterial({
+      color,
+      roughness: 0.7,
+      metalness: 0.3,
+      emissive: color,
+      emissiveIntensity: 0.2
+    });
+
+    const mesh = new THREE.Mesh(geometry, material);
+    mesh.position.set(x, y, z);
+    objectsRef.current.set(mesh, shard.data);
+    scene.add(mesh);
+  };
 
   // Применяем вращение
   useEffect(() => {
