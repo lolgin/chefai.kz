@@ -465,14 +465,6 @@ export const ShardCloudThreeJS: React.FC<ShardCloudThreeJSProps> = ({
           css3DScene.rotation.x = rotX;
           css3DScene.rotation.y = rotY;
         }
-        scene.rotation.x = rotX;
-        scene.rotation.y = rotY;
-        
-        const css3DScene = css3DSceneRef.current;
-        if (css3DScene) {
-          css3DScene.rotation.x = rotX;
-          css3DScene.rotation.y = rotY;
-        }
 
         lastMousePosRef.current = { x: event.clientX, y: event.clientY };
       }
