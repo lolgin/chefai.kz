@@ -522,10 +522,21 @@ const AppContent: React.FC = () => {
   };
 
   const handleDeleteItem = (item: any) => {
-    if (confirm(`Удалить "${item.name || item.title}"?`)) {
-      const updatedNodes = settings.customNodes.filter(n => n.id !== item.id);
-      updateSettings({ customNodes: updatedNodes });
-      addLog(`Deleted: ${item.name}`, 'info');
+    const itemName = item.name || item.title || 'этот поток';
+    if (confirm(`Удалить "${itemName}"?`)) {
+      // Для customNodes удаляем по id
+      if (item.id) {
+        const updatedNodes = settings.customNodes.filter(n => n.id !== item.id);
+        updateSettings({ customNodes: updatedNodes });
+        addLog(`Deleted: ${itemName}`, 'info');
+      } else {
+        // Для потоков без id удаляем по URL (добавляем в blacklist)
+        const url = item.url || item.streamUrl || item.url_resolved;
+        if (url) {
+          addToBlacklist(url, 'user_ban');
+          addLog(`Banned: ${itemName}`, 'warning');
+        }
+      }
     }
   };
 
