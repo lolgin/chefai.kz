@@ -32,6 +32,7 @@ import { Cpu, List, Globe, Database, Palette, Diamond, X, Search, Activity, Radi
 import { AudioProvider } from './contexts/AudioContext';
 import { SettingsProvider } from './contexts/SettingsContext';
 import { MetadataProvider } from './contexts/MetadataContext';
+import { LayoutProvider } from './contexts/LayoutContext';
 
 // Хуки
 import { useSystemLogs } from './hooks/useSystemLogs';
@@ -106,6 +107,24 @@ const AppContent: React.FC = () => {
     isShuffleMode,
     onSearchQueryUpdate: setSearchQuery
   });
+
+  // Закрытие панели движков при клике вне её
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      // Проверяем, что клик не по кнопке движка и не по самой панели
+      if (isEngineDropdownOpen && 
+          !target.closest('[data-engine-panel]') && 
+          !target.closest('[data-engine-button]')) {
+        setIsEngineDropdownOpen(false);
+      }
+    };
+    
+    if (isEngineDropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [isEngineDropdownOpen]);
 
   // Анимация 3D вращения
   // Автовращение отключено - только ручное управление мышью
@@ -440,12 +459,13 @@ const AppContent: React.FC = () => {
           }}
         >
           <button onClick={() => setIsLeftPanelOpen(!isLeftPanelOpen)} className="h-full px-3 md:px-5 border-r hover:bg-black/10 transition-all" style={{ borderColor: `${theme.text}11` }}>
-            <List className="w-4 h-4 md:w-[18px] md:h-[18px]" />
+            <List className="w-4 h-4 md:w-[18px] md:h-[18px]" style={{ color: theme.text }} />
           </button>
           
           {/* Компактный селектор движка */}
           <div className="relative h-full border-r" style={{ borderColor: `${theme.text}11` }}>
             <button
+              data-engine-button
               onClick={() => setIsEngineDropdownOpen(!isEngineDropdownOpen)}
               className="h-full px-3 md:px-4 hover:bg-black/10 transition-all flex items-center gap-1 md:gap-2"
               title="Render Engine"
@@ -455,64 +475,79 @@ const AppContent: React.FC = () => {
               </span>
               <ChevronDown 
                 className="w-3 h-3 md:w-[14px] md:h-[14px] transition-transform"
-                style={{ transform: isEngineDropdownOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}
+                style={{ 
+                  transform: isEngineDropdownOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+                  color: theme.text
+                }}
               />
             </button>
             
+            {/* Engine Panel - компактная панель как LeftPanel */}
             {isEngineDropdownOpen && (
               <div 
-                className="absolute top-full left-0 mt-1 py-2 rounded-lg bg-black/95 backdrop-blur-xl border shadow-xl z-50 w-64 md:min-w-[280px]"
-                style={{ borderColor: `${theme.text}22` }}
+                data-engine-panel
+                className="absolute top-full left-0 mt-2 bg-black/20 backdrop-blur-xl border rounded-lg shadow-xl z-50 transition-all duration-300"
+                style={{ 
+                  borderColor: `${theme.text}22`,
+                  width: 'auto',
+                  minWidth: '280px',
+                  maxWidth: '400px'
+                }}
               >
-                {RENDER_ENGINES.map(engine => {
-                  const isActive = (settings.display?.renderEngine || RenderEngine.THREEJS) === engine.id;
-                  const isAvailable = engine.id === RenderEngine.CSS3D || engine.id === RenderEngine.THREEJS;
-                  
-                  return (
-                    <button
-                      key={engine.id}
-                      onClick={() => {
-                        if (isAvailable) {
-                          updateSettings({ display: { ...settings.display, renderEngine: engine.id } });
-                          setIsEngineDropdownOpen(false);
-                        }
-                      }}
-                      disabled={!isAvailable}
-                      className="w-full px-4 py-3 flex items-center gap-3 hover:bg-white/10 transition-all text-left"
-                      style={{
-                        backgroundColor: isActive ? `${theme.text}15` : 'transparent',
-                        opacity: isAvailable ? 1 : 0.3,
-                        cursor: isAvailable ? 'pointer' : 'not-allowed'
-                      }}
-                    >
-                      <span className="text-2xl">{engine.icon}</span>
-                      <div className="flex-1">
-                        <div className="text-sm font-bold uppercase" style={{ color: theme.text }}>
-                          {engine.name}
+                <div className="p-4 space-y-1">
+                  <div className="text-[10px] font-black uppercase opacity-40 mb-3 tracking-wider px-2" style={{ color: theme.text }}>
+                    RENDER ENGINE
+                  </div>
+                  {RENDER_ENGINES.map(engine => {
+                    const isActive = (settings.display?.renderEngine || RenderEngine.THREEJS) === engine.id;
+                    const isAvailable = engine.id === RenderEngine.CSS3D || engine.id === RenderEngine.THREEJS;
+                    
+                    return (
+                      <button
+                        key={engine.id}
+                        onClick={() => {
+                          if (isAvailable) {
+                            updateSettings({ display: { ...settings.display, renderEngine: engine.id } });
+                            setIsEngineDropdownOpen(false);
+                          }
+                        }}
+                        disabled={!isAvailable}
+                        className="w-full px-3 py-2 flex items-center gap-3 hover:bg-white/10 transition-all text-left rounded-lg"
+                        style={{
+                          backgroundColor: isActive ? `${theme.text}15` : 'transparent',
+                          opacity: isAvailable ? 1 : 0.3,
+                          cursor: isAvailable ? 'pointer' : 'not-allowed'
+                        }}
+                      >
+                        <span className="text-xl">{engine.icon}</span>
+                        <div className="flex-1 min-w-0">
+                          <div className="text-xs font-bold uppercase truncate" style={{ color: theme.text }}>
+                            {engine.name}
+                          </div>
+                          <div className="text-[10px] opacity-50 truncate" style={{ color: theme.text }}>{engine.performance}</div>
                         </div>
-                        <div className="text-xs opacity-50">{engine.performance}</div>
-                      </div>
-                      {!isAvailable && (
-                        <span className="text-xs px-2 py-1 rounded bg-yellow-500/20 text-yellow-400 font-bold">
-                          SOON
-                        </span>
-                      )}
-                    </button>
-                  );
-                })}
+                        {!isAvailable && (
+                          <span className="text-[9px] px-1.5 py-0.5 rounded bg-yellow-500/20 text-yellow-400 font-bold">
+                            SOON
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
             )}
           </div>
           
           <div className="flex-1 overflow-hidden">
             <div className="marquee-slow whitespace-nowrap pl-full">
-              <span className="text-[10px] font-black uppercase font-syncopate tracking-[0.5em] opacity-10 mr-20">
+              <span className="text-[10px] font-black uppercase font-syncopate tracking-[0.5em] opacity-10 mr-20" style={{ color: theme.text }}>
                 RELAY_SOURCE: {audioState.currentUrl} // CLUSTER: {searchQuery.toUpperCase()} // STATUS: {statusMessage}
               </span>
             </div>
           </div>
           <button onClick={() => setIsRightPanelOpen(!isRightPanelOpen)} className="h-full px-3 md:px-5 border-l hover:bg-black/10 transition-all" style={{ borderColor: `${theme.text}11` }} title="Custom Streams">
-            <Radio className="w-4 h-4 md:w-[18px] md:h-[18px]" />
+            <Radio className="w-4 h-4 md:w-[18px] md:h-[18px]" style={{ color: theme.text }} />
           </button>
         </div>
 
@@ -875,13 +910,15 @@ const AppContent: React.FC = () => {
 // Обертка с провайдерами контекстов
 const App: React.FC = () => {
   return (
-    <SettingsProvider>
-      <AudioProvider>
-        <MetadataProvider>
-          <AppContent />
-        </MetadataProvider>
-      </AudioProvider>
-    </SettingsProvider>
+    <LayoutProvider>
+      <SettingsProvider>
+        <AudioProvider>
+          <MetadataProvider>
+            <AppContent />
+          </MetadataProvider>
+        </AudioProvider>
+      </SettingsProvider>
+    </LayoutProvider>
   );
 };
 
