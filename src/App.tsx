@@ -517,24 +517,8 @@ const AppContent: React.FC = () => {
           </button>
         </div>
 
-        <div className="flex-1 flex overflow-hidden">
-          {/* Left Nav */}
-          <LeftPanel
-            isOpen={isLeftPanelOpen}
-            providers={PROVIDERS}
-            genresByProvider={GENRES_BY_PROVIDER}
-            customNodes={settings.customNodes}
-            currentGenre={audioState.currentGenre}
-            onGenreClick={handleGenreClick}
-            getGenreUrl={getGenreUrl}
-            theme={theme}
-            onDeleteNode={handleDeleteNode}
-            onEditNode={handleEditNode}
-            onAddNode={handleAddNode}
-          />
-
-          {/* Stage */}
-          <div className="flex-1 flex flex-col relative overflow-hidden">
+        <div className="flex-1 flex flex-col relative overflow-hidden">
+          {/* Stage - полный экран */}
             {/* Module Nav */}
             <ModuleSwitcher
               activeModule={activeModule}
@@ -717,7 +701,21 @@ const AppContent: React.FC = () => {
                 <X size={20} />
               </button>
             )}
-          </div>
+
+          {/* Абсолютно позиционированные панели поверх облака */}
+          <LeftPanel
+            isOpen={isLeftPanelOpen}
+            providers={PROVIDERS}
+            genresByProvider={GENRES_BY_PROVIDER}
+            customNodes={settings.customNodes}
+            currentGenre={audioState.currentGenre}
+            onGenreClick={handleGenreClick}
+            getGenreUrl={getGenreUrl}
+            theme={theme}
+            onDeleteNode={handleDeleteNode}
+            onEditNode={handleEditNode}
+            onAddNode={handleAddNode}
+          />
 
           {/* Right Panel - Custom Streams */}
           <RightPanel

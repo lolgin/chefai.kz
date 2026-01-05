@@ -96,7 +96,7 @@ export const RightPanel: React.FC<RightPanelProps> = ({
 
   return (
     <div
-      className="hidden lg:flex transition-all duration-500 border-l bg-black/30 backdrop-blur-md flex-col overflow-hidden"
+      className="hidden lg:flex transition-all duration-500 border-l bg-black/20 backdrop-blur-xl flex-col overflow-hidden absolute right-0 top-0 bottom-0 z-40"
       style={{ borderColor: `${theme.text}11`, width: isOpen ? '320px' : '0' }}
     >
       <div className="w-80 h-full flex flex-col">

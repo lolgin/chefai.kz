@@ -111,7 +111,7 @@ export const LeftPanel: React.FC<LeftPanelProps> = ({
 
   return (
     <div
-      className="hidden lg:flex transition-all duration-500 border-r bg-black/30 backdrop-blur-md flex-col overflow-hidden"
+      className="hidden lg:flex transition-all duration-500 border-r bg-black/20 backdrop-blur-xl flex-col overflow-hidden absolute left-0 top-0 bottom-0 z-40"
       style={{ borderColor: `${theme.text}11`, width: isOpen ? '480px' : '0' }}
       onWheel={(e) => e.stopPropagation()} // Изолируем скролл панели
     >
