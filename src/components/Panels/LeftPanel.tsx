@@ -40,7 +40,7 @@ export const LeftPanel: React.FC<LeftPanelProps> = ({
   theme
 }) => {
   const { settings, updateDisplaySettings } = useSettings();
-  const currentEngine = settings.displaySettings?.renderEngine || RenderEngine.THREEJS;
+  const currentEngine = settings.display?.renderEngine || RenderEngine.THREEJS;
   const [isEngineDropdownOpen, setIsEngineDropdownOpen] = useState(false);
   
   const [editingNode, setEditingNode] = useState<CustomNode | null>(null);
@@ -88,7 +88,12 @@ export const LeftPanel: React.FC<LeftPanelProps> = ({
   
   const handleSaveEdit = () => {
     if (editingNode && onEditNode && editName.trim() && editUrl.trim()) {
-      onEditNode(editingNode, { name: editName.trim(), url: editUrl.trim() });
+      const updatedNode: CustomNode = {
+        ...editingNode,
+        name: editName.trim(),
+        url: editUrl.trim()
+      };
+      onEditNode(editingNode, updatedNode);
       setEditingNode(null);
     }
   };
@@ -135,8 +140,8 @@ export const LeftPanel: React.FC<LeftPanelProps> = ({
           <Hexagon size={32} /> NEURAL_CORE
         </h3>
         
-        {/* Dropdown для выбора движка рендеринга */}
-        <div className="relative" ref={engineDropdownRef}>
+        {/* Dropdown для выбора движка рендеринга - STICKY */}
+        <div className="sticky top-0 z-10 bg-black/80 backdrop-blur-xl pb-6 -mt-2" ref={engineDropdownRef}>
           <button
             onClick={() => setIsEngineDropdownOpen(!isEngineDropdownOpen)}
             className="w-full flex items-center justify-between px-6 py-5 rounded-xl bg-black/20 hover:bg-black/30 transition-all border-2"
@@ -244,7 +249,11 @@ export const LeftPanel: React.FC<LeftPanelProps> = ({
             : genresByProvider[p.id] || [];
           
           return (
-            <div key={p.id} className="space-y-3">
+            <div 
+              key={p.id} 
+              className="space-y-3"
+              onWheel={(e) => e.stopPropagation()} // Изолируем скролл списка жанров
+            >
               <div className="text-[18px] font-black uppercase opacity-40 mb-3 px-6 tracking-wider">
                 {p.name}
               </div>
