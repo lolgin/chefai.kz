@@ -40,6 +40,7 @@ import { useStreamDiscovery } from './hooks/useStreamDiscovery';
 import { useAudioPlayer } from './hooks/useAudioPlayer';
 import { useSettings } from './contexts/SettingsContext';
 import { useMetadata } from './contexts/MetadataContext';
+import { useLayout } from './contexts/LayoutContext';
 
 // Компоненты
 import { PlayerControls } from './components/Player/PlayerControls';
@@ -48,6 +49,7 @@ import { TrackInfo } from './components/Player/TrackInfo';
 import { LeftPanel } from './components/Panels/LeftPanel';
 import { RightPanel } from './components/Panels/RightPanel';
 import { ModuleSwitcher, ModuleType } from './components/Panels/ModuleSwitcher';
+import { DraggableElement } from './components/UI/DraggableElement';
 import { ShardCloud } from './components/Background/ShardCloud';
 import { ShardCloudThreeJS } from './components/Background/ShardCloudThreeJS';
 import { DiscoveryModule } from './components/Modules/DiscoveryModule';
@@ -73,6 +75,7 @@ const AppContent: React.FC = () => {
   const [isShuffleMode, setIsShuffleMode] = useState(false);
   const [isTestingSignals, setIsTestingSignals] = useState(false);
   const [isEngineDropdownOpen, setIsEngineDropdownOpen] = useState(false);
+  const [isLayoutEditMode, setIsLayoutEditMode] = useState(false);
   
   // 3D вращение
   const [rotation, setRotation] = useState({ x: 0, y: 0 });
@@ -84,6 +87,7 @@ const AppContent: React.FC = () => {
   const { systemLogs, addLog } = useSystemLogs();
   const { settings, theme, updateSettings, updateDisplaySettings } = useSettings();
   const { metadata, statusMessage, updateMetadata, fetchAIMetadata } = useMetadata();
+  const { layouts, resetLayout } = useLayout();
   
   const {
     searchQuery,
@@ -546,6 +550,17 @@ const AppContent: React.FC = () => {
               </span>
             </div>
           </div>
+          
+          {/* Layout Edit Mode Toggle */}
+          <button 
+            onClick={() => setIsLayoutEditMode(!isLayoutEditMode)} 
+            className={`h-full px-3 md:px-5 border-l hover:bg-black/10 transition-all ${isLayoutEditMode ? 'bg-purple-600/30' : ''}`}
+            style={{ borderColor: `${theme.text}11` }} 
+            title="Layout Edit Mode"
+          >
+            <Layers className="w-4 h-4 md:w-[18px] md:h-[18px]" style={{ color: isLayoutEditMode ? theme.accent : theme.text }} />
+          </button>
+          
           <button onClick={() => setIsRightPanelOpen(!isRightPanelOpen)} className="h-full px-3 md:px-5 border-l hover:bg-black/10 transition-all" style={{ borderColor: `${theme.text}11` }} title="Custom Streams">
             <Radio className="w-4 h-4 md:w-[18px] md:h-[18px]" style={{ color: theme.text }} />
           </button>
@@ -736,32 +751,89 @@ const AppContent: React.FC = () => {
               </button>
             )}
 
+          {/* Layout Edit Mode UI */}
+          {isLayoutEditMode && (
+            <div className="absolute top-6 left-6 z-50 bg-black/90 backdrop-blur-xl rounded-lg p-4 border" style={{ borderColor: `${theme.accent}40` }}>
+              <div className="text-xs font-bold uppercase mb-2" style={{ color: theme.accent }}>
+                🎨 РЕЖИМ РЕДАКТИРОВАНИЯ
+              </div>
+              <div className="text-[10px] opacity-70 mb-3 space-y-1" style={{ color: theme.text }}>
+                <div>• Наведите на панель - появятся ручки</div>
+                <div>• Тяните за ручку для перемещения</div>
+                <div>• Тяните за угол для изменения размера</div>
+              </div>
+              <button
+                onClick={() => {
+                  resetLayout();
+                  addLog('Layout reset', 'info');
+                }}
+                className="w-full px-3 py-1.5 text-[10px] font-bold uppercase rounded bg-red-500/20 hover:bg-red-500/40 transition-all"
+                style={{ color: theme.text }}
+              >
+                СБРОСИТЬ LAYOUT
+              </button>
+            </div>
+          )}
+
           {/* Абсолютно позиционированные панели поверх облака */}
-          <LeftPanel
-            isOpen={isLeftPanelOpen}
-            providers={PROVIDERS}
-            genresByProvider={GENRES_BY_PROVIDER}
-            customNodes={settings.customNodes}
-            currentGenre={audioState.currentGenre}
-            onGenreClick={handleGenreClick}
-            getGenreUrl={getGenreUrl}
-            theme={theme}
-            onDeleteNode={handleDeleteNode}
-            onEditNode={handleEditNode}
-            onAddNode={handleAddNode}
-          />
+          {isLayoutEditMode ? (
+            <DraggableElement id="streams-list" showHandle={true} resizable={true}>
+              <LeftPanel
+                isOpen={isLeftPanelOpen}
+                providers={PROVIDERS}
+                genresByProvider={GENRES_BY_PROVIDER}
+                customNodes={settings.customNodes}
+                currentGenre={audioState.currentGenre}
+                onGenreClick={handleGenreClick}
+                getGenreUrl={getGenreUrl}
+                theme={theme}
+                onDeleteNode={handleDeleteNode}
+                onEditNode={handleEditNode}
+                onAddNode={handleAddNode}
+              />
+            </DraggableElement>
+          ) : (
+            <LeftPanel
+              isOpen={isLeftPanelOpen}
+              providers={PROVIDERS}
+              genresByProvider={GENRES_BY_PROVIDER}
+              customNodes={settings.customNodes}
+              currentGenre={audioState.currentGenre}
+              onGenreClick={handleGenreClick}
+              getGenreUrl={getGenreUrl}
+              theme={theme}
+              onDeleteNode={handleDeleteNode}
+              onEditNode={handleEditNode}
+              onAddNode={handleAddNode}
+            />
+          )}
 
           {/* Right Panel - Custom Streams */}
-          <RightPanel
-            isOpen={isRightPanelOpen}
-            customNodes={settings.customNodes}
-            currentGenre={audioState.currentGenre}
-            onGenreClick={handleGenreClick}
-            onEditNode={handleEditNode}
-            onDeleteNode={handleDeleteNode}
-            onAddNode={handleAddNode}
-            theme={theme}
-          />
+          {isLayoutEditMode ? (
+            <DraggableElement id="custom-nodes" showHandle={true} resizable={true}>
+              <RightPanel
+                isOpen={isRightPanelOpen}
+                customNodes={settings.customNodes}
+                currentGenre={audioState.currentGenre}
+                onGenreClick={handleGenreClick}
+                onEditNode={handleEditNode}
+                onDeleteNode={handleDeleteNode}
+                onAddNode={handleAddNode}
+                theme={theme}
+              />
+            </DraggableElement>
+          ) : (
+            <RightPanel
+              isOpen={isRightPanelOpen}
+              customNodes={settings.customNodes}
+              currentGenre={audioState.currentGenre}
+              onGenreClick={handleGenreClick}
+              onEditNode={handleEditNode}
+              onDeleteNode={handleDeleteNode}
+              onAddNode={handleAddNode}
+              theme={theme}
+            />
+          )}
         </div>
 
         {/* Master Footer Module */}
