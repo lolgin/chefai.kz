@@ -11,7 +11,7 @@
  */
 
 import React, { createContext, useContext, useState, useEffect, ReactNode, useMemo } from 'react';
-import { AppSettings, ThemeScheme, CustomNode, FavoriteNode, DisplaySettings, BlacklistedStream } from '../types';
+import { AppSettings, ThemeScheme, CustomNode, FavoriteNode, DisplaySettings, BlacklistedStream, SearchHistoryItem } from '../types';
 import { THEMES } from '../constants';
 
 interface SettingsContextType {
@@ -27,6 +27,8 @@ interface SettingsContextType {
   addToBlacklist: (url: string, reason?: BlacklistedStream['reason']) => void;
   removeFromBlacklist: (url: string) => void;
   isBlacklisted: (url: string) => boolean;
+  addToSearchHistory: (query: string, resultsCount?: number) => void;
+  clearSearchHistory: () => void;
 }
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
@@ -45,6 +47,7 @@ const DEFAULT_SETTINGS: AppSettings = {
   blacklist: [],
   blacklistedStreams: [],
   searchCache: [],
+  searchHistory: [],
   display: {
     fontSize: 'lg',
     iconSize: 'lg',
@@ -74,7 +77,7 @@ const DEFAULT_SETTINGS: AppSettings = {
   moduleCustomizations: []
 };
 
-const STORAGE_KEY = 'aurawave_v30_settings'; // Увеличена версия для новых полей
+const STORAGE_KEY = 'aurawave_v31_settings'; // Добавлена история поисков
 
 export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [settings, setSettings] = useState<AppSettings>(() => {
@@ -174,6 +177,33 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
     return blacklistedStreams.some(b => b.url === url);
   };
 
+  const addToSearchHistory = (query: string, resultsCount?: number) => {
+    if (!query || query.trim().length < 2) return;
+    
+    setSettings(prev => {
+      const searchHistory = prev.searchHistory || [];
+      // Убираем дубли по query
+      const filtered = searchHistory.filter(item => item.query !== query);
+      // Добавляем новый в начало
+      const updated = [
+        { query, timestamp: Date.now(), resultsCount },
+        ...filtered
+      ].slice(0, 20); // Храним только 20 последних
+      
+      return {
+        ...prev,
+        searchHistory: updated
+      };
+    });
+  };
+
+  const clearSearchHistory = () => {
+    setSettings(prev => ({
+      ...prev,
+      searchHistory: []
+    }));
+  };
+
   const value: SettingsContextType = {
     settings,
     theme,
@@ -186,7 +216,9 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
     removeFavorite,
     addToBlacklist,
     removeFromBlacklist,
-    isBlacklisted
+    isBlacklisted,
+    addToSearchHistory,
+    clearSearchHistory
   };
 
   return <SettingsContext.Provider value={value}>{children}</SettingsContext.Provider>;

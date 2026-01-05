@@ -26,7 +26,7 @@
  */
 
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
-import { Cpu, List, Globe, Database, Palette, Diamond, X, Search, Activity, Radio, Monitor, Type, Maximize, Sparkles, Layers, Eye, Orbit, ChevronDown } from 'lucide-react';
+import { Cpu, List, Globe, Database, Palette, Diamond, X, Search, Activity, Radio, Monitor, Type, Maximize, Sparkles, Layers, Eye, Orbit, ChevronDown, RadioTower } from 'lucide-react';
 
 // Контексты
 import { AudioProvider } from './contexts/AudioContext';
@@ -198,7 +198,7 @@ const AppContent: React.FC = () => {
 
   // Используем хуки и контексты
   const { systemLogs, addLog } = useSystemLogs();
-  const { settings, theme, updateSettings, updateDisplaySettings, addToBlacklist, removeFromBlacklist, isBlacklisted } = useSettings();
+  const { settings, theme, updateSettings, updateDisplaySettings, addToBlacklist, removeFromBlacklist, isBlacklisted, addToSearchHistory, clearSearchHistory } = useSettings();
   const { metadata, statusMessage, updateMetadata, fetchAIMetadata } = useMetadata();
   
   const {
@@ -249,6 +249,20 @@ const AppContent: React.FC = () => {
   // Анимация 3D вращения
   // Автовращение отключено - только ручное управление мышью
 
+  // Автоподстановка первого слова из текущего трека
+  const handleInsertFromCurrentTrack = () => {
+    const currentItem = audioState.sessionHistory[audioState.historyIndex];
+    if (!currentItem) return;
+    
+    const trackName = currentItem.name || '';
+    const firstWord = trackName.split(/[\s-]+/)[0];
+    if (firstWord && firstWord.length >= 2) {
+      setSearchQuery(firstWord);
+      setActiveModule('discovery');
+      instantSearch(firstWord);
+    }
+  };
+
   // Обработчик события для добавления слова в поиск (Shift+Click на тег)
   useEffect(() => {
     const handleAppendSearch = (e: CustomEvent) => {
@@ -266,6 +280,14 @@ const AppContent: React.FC = () => {
     window.addEventListener('appendSearchQuery', handleAppendSearch as EventListener);
     return () => window.removeEventListener('appendSearchQuery', handleAppendSearch as EventListener);
   }, []);
+
+  // Сохранение истории поисков
+  useEffect(() => {
+    if (searchQuery.trim().length >= 2 && suggestions.length > 0 && !isSearching) {
+      addToSearchHistory(searchQuery, suggestions.length);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchQuery, suggestions.length, isSearching]);
 
   // КЕШ позиций - чтобы объекты не прыгали при изменении списка
   const positionCacheRef = useRef<Map<string, { x: number; y: number; z: number; size: number }>>(new Map());
@@ -992,8 +1014,27 @@ const AppContent: React.FC = () => {
           {/* Compact Search - упрощенный, без лишних кнопок */}
           <div className="flex flex-col items-start gap-2">
             <div className="flex items-center gap-2">
+              {/* Current Track Button - автоподстановка */}
+              {audioState.sessionHistory[audioState.historyIndex] && (
+                <button
+                  onClick={handleInsertFromCurrentTrack}
+                  className="hidden md:flex items-center gap-1.5 px-2 py-1 text-[10px] rounded-full transition-all hover:scale-105 backdrop-blur-xl border"
+                  style={{
+                    backgroundColor: `${theme.accent}10`,
+                    borderColor: `${theme.accent}30`,
+                    color: theme.text
+                  }}
+                  title="Click to search by current track"
+                >
+                  <RadioTower size={12} style={{ color: theme.accent }} />
+                  <span className="max-w-[80px] truncate opacity-60">
+                    {audioState.sessionHistory[audioState.historyIndex].name}
+                  </span>
+                </button>
+              )}
+              
               {/* Compact Search Input - упрощенный */}
-              <div className="relative hidden md:block">
+              <div className="relative hidden md:block group">
                 <input
                   type="text"
                   value={searchQuery}
@@ -1010,6 +1051,30 @@ const AppContent: React.FC = () => {
                   className="absolute right-2 top-1/2 -translate-y-1/2 opacity-30 pointer-events-none"
                   style={{ color: theme.text }}
                 />
+                
+                {/* Search History Dropdown */}
+                {settings.searchHistory && settings.searchHistory.length > 0 && (
+                  <div className="absolute bottom-full mb-1 left-0 right-0 min-w-[200px] bg-black/90 backdrop-blur-xl rounded-lg border overflow-hidden opacity-0 group-focus-within:opacity-100 group-hover:opacity-100 transition-opacity pointer-events-none group-focus-within:pointer-events-auto group-hover:pointer-events-auto z-50 shadow-2xl"
+                    style={{ borderColor: `${theme.accent}30` }}
+                  >
+                    <div className="px-2 py-1 text-[9px] opacity-40 border-b" style={{ borderColor: `${theme.accent}20` }}>
+                      Recent searches
+                    </div>
+                    {settings.searchHistory.slice(0, 5).map((item, idx) => (
+                      <button
+                        key={idx}
+                        onClick={() => setSearchQuery(item.query)}
+                        className="w-full px-3 py-1.5 text-left text-[10px] hover:bg-white/10 transition-colors flex items-center justify-between"
+                        style={{ color: theme.text }}
+                      >
+                        <span className="opacity-80">{item.query}</span>
+                        {item.resultsCount !== undefined && (
+                          <span className="opacity-40 text-[9px]">({item.resultsCount})</span>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
             

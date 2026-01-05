@@ -175,6 +175,12 @@ export interface SearchCacheEntry {
   timestamp: number;
 }
 
+export interface SearchHistoryItem {
+  query: string;
+  timestamp: number;
+  resultsCount?: number;
+}
+
 export interface AppSettings {
   themeId: string;
   equalizer: EqualizerSettings;
@@ -183,6 +189,7 @@ export interface AppSettings {
   blacklist: string[]; // Legacy: simple URLs
   blacklistedStreams?: BlacklistedStream[]; // New: URLs with reasons
   searchCache?: SearchCacheEntry[]; // Кеш результатов поиска
+  searchHistory?: SearchHistoryItem[]; // История поисков
   display?: DisplaySettings;
   moduleCustomizations?: ModuleCustomization[];
 }
